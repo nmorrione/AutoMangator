@@ -1,0 +1,81 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="using:AutoMangator"
+        x:Class="AutoMangator.KoboWindow"
+        Title="EPUB per Kobo"
+        Icon="avares://AutoMangator/Assets/icon.png"
+        Width="860" Height="820" MinWidth="680" MinHeight="640"
+        WindowStartupLocation="CenterOwner">
+
+  <Grid Margin="12" RowDefinitions="Auto,Auto,Auto,Auto,Auto,*,Auto,Auto" RowSpacing="4">
+
+    <TextBlock Grid.Row="0" Text="Cartella con i file CBZ:" />
+    <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="6">
+      <TextBox x:Name="txtFolder" IsReadOnly="True" />
+      <Button Grid.Column="1" x:Name="btnBrowse" Content="Sfoglia..." Click="btnBrowse_Click" />
+    </Grid>
+
+    <!-- Dati comuni a tutti i capitoli -->
+    <Grid Grid.Row="2" Margin="0,10,0,0" ColumnDefinitions="Auto,*,16,Auto,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto"
+          RowSpacing="6" ColumnSpacing="8">
+      <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="Serie *" FontWeight="SemiBold" />
+      <TextBox   Grid.Row="0" Grid.Column="1" x:Name="txtSeries" />
+      <TextBlock Grid.Row="0" Grid.Column="3" VerticalAlignment="Center" Text="Lingua" />
+      <TextBox   Grid.Row="0" Grid.Column="4" x:Name="txtLanguage" Text="it" PlaceholderText="it, en, ja..." />
+
+      <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Text="Autore (testi)" />
+      <TextBox   Grid.Row="1" Grid.Column="1" x:Name="txtWriter" />
+      <TextBlock Grid.Row="1" Grid.Column="3" VerticalAlignment="Center" Text="Disegnatore" />
+      <TextBox   Grid.Row="1" Grid.Column="4" x:Name="txtArtist" PlaceholderText="se diverso dall'autore" />
+
+      <TextBlock Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Text="Editore" />
+      <TextBox   Grid.Row="2" Grid.Column="1" x:Name="txtPublisher" />
+      <TextBlock Grid.Row="2" Grid.Column="3" VerticalAlignment="Center" Text="Anno" />
+      <TextBox   Grid.Row="2" Grid.Column="4" x:Name="txtYear" />
+
+      <TextBlock Grid.Row="3" Grid.Column="0" VerticalAlignment="Center" Text="Genere" />
+      <TextBox   Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="4" x:Name="txtGenre" PlaceholderText="separati da virgola, es. Avventura, Fantasy" />
+
+      <TextBlock Grid.Row="4" Grid.Column="0" VerticalAlignment="Top" Margin="0,6,0,0" Text="Trama" />
+      <TextBox   Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="4" x:Name="txtSummary" Height="70"
+                 AcceptsReturn="True" TextWrapping="Wrap" />
+    </Grid>
+
+    <CheckBox Grid.Row="3" x:Name="chkRtl" Content="Manga: lettura da destra a sinistra" />
+
+    <!-- Capitoli -->
+    <Grid Grid.Row="4" Margin="0,8,0,0" ColumnDefinitions="80,*,240" ColumnSpacing="8">
+      <TextBlock Grid.Column="0" Text="Numero" FontWeight="SemiBold" />
+      <TextBlock Grid.Column="1" Text="Titolo del capitolo (facoltativo)" FontWeight="SemiBold" />
+      <TextBlock Grid.Column="2" Text="File" FontWeight="SemiBold" />
+    </Grid>
+    <Border Grid.Row="5" BorderThickness="1" BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}" CornerRadius="4">
+      <ScrollViewer>
+        <ItemsControl x:Name="lstChapters" Margin="6">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="local:ChapterInfo">
+              <Grid ColumnDefinitions="80,*,240" ColumnSpacing="8" Margin="0,2">
+                <TextBox Grid.Column="0" Text="{Binding Number}" />
+                <TextBox Grid.Column="1" Text="{Binding Title}" />
+                <TextBlock Grid.Column="2" Text="{Binding FileName}" VerticalAlignment="Center"
+                           TextTrimming="CharacterEllipsis" Opacity="0.7" ToolTip.Tip="{Binding FileName}" />
+              </Grid>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </ScrollViewer>
+    </Border>
+
+    <TextBox Grid.Row="6" x:Name="txtLog" Margin="0,6,0,0" Height="90" IsReadOnly="True" AcceptsReturn="True"
+             TextWrapping="NoWrap" FontFamily="Cascadia Mono,Consolas,Menlo,monospace" FontSize="12" />
+
+    <Grid Grid.Row="7" Margin="0,6,0,0" ColumnDefinitions="*,Auto">
+      <ProgressBar x:Name="progress" VerticalAlignment="Center" Margin="0,0,12,0" />
+      <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+        <Button x:Name="btnCreate" Content="Crea EPUB" Classes="accent" MinWidth="120" Click="btnCreate_Click" />
+        <Button x:Name="btnOpen" Content="Apri cartella" MinWidth="110" Click="btnOpen_Click" />
+        <Button x:Name="btnClose" Content="Chiudi" MinWidth="90" Click="btnClose_Click" />
+      </StackPanel>
+    </Grid>
+  </Grid>
+</Window>

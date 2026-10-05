@@ -181,7 +181,7 @@ public sealed class CbzMaker : IAsyncDisposable
         d.Length > 12 && d[4..8] is [0x66, 0x74, 0x79, 0x70] ? ".avif" :
         null;
 
-    private static string SafeFileName(string s)
+    internal static string SafeFileName(string s)
     {
         foreach (var c in Path.GetInvalidFileNameChars()) s = s.Replace(c, '_');
         return s.Trim().TrimEnd('.');

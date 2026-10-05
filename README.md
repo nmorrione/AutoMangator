@@ -25,7 +25,21 @@ Le versioni pronte sono nelle [Release](https://github.com/nmorrione/AutoMangato
 - **Lato minimo immagine**: sotto questa dimensione (px) un'immagine viene scartata.
 - **Mostra il browser**: utile se il sito blocca i browser invisibili o chiede una verifica.
 
-Senza interfaccia, da terminale: `AutoMangator --cli <indirizzo> [cartella]`.
+## EPUB per Kobo
+Il software di serie dei Kobo non legge i dati contenuti nei `.cbz` (mostra il nome del file e "Autore sconosciuto").
+Con **EPUB per Kobo...** si sceglie la cartella con i `.cbz` dei capitoli e si inseriscono una volta sola i dati della serie
+(serie, autore, disegnatore, editore, anno, genere, lingua, trama, lettura da destra a sinistra).
+Per ogni capitolo viene creato, nella sottocartella `Kobo`, un `.kepub.epub` a layout fisso con quei dati:
+- titolo "Serie 012 - Titolo del capitolo", così i capitoli restano in ordine in libreria;
+- numero del capitolo preso dal nome del file (correggibile nella tabella); i file senza numero vanno in coda;
+- immagini originali, senza ricompressione (solo WebP e AVIF, che Kobo non mostra, diventano JPEG);
+- serie e numero anche nei metadati: il Kobo li mostra nella scheda Serie se è installato [NickelSeries](https://pgaskin.net/kepubify/ns/).
+
+Basta copiare gli EPUB nel Kobo collegato via USB. Riaprendo la stessa cartella, i dati della serie vengono riproposti.
+
+## Da terminale
+- `AutoMangator --cli <indirizzo> [cartella]`: crea il `.cbz` senza aprire la finestra.
+- `AutoMangator --epub <cartella> <serie> [autore]`: crea gli EPUB per Kobo dai `.cbz` della cartella.
 
 ## Compilare
 Serve il .NET 10 SDK. L'interfaccia è fatta con [Avalonia UI](https://avaloniaui.net/).

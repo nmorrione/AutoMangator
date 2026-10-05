@@ -30,17 +30,29 @@ public partial class MainWindow : Window
 
     private void btnOpenFolder_Click(object? sender, RoutedEventArgs e)
     {
-        bool hasFile = _lastFile is not null && File.Exists(_lastFile);
-        string? folder = txtFolder.Text?.Trim();
-        if (!hasFile && !Directory.Exists(folder))
-            return;
+        if (_lastFile is not null && File.Exists(_lastFile))
+            OpenInFileManager(_lastFile);
+        else if (Directory.Exists(txtFolder.Text?.Trim()))
+            OpenInFileManager(txtFolder.Text.Trim());
+    }
 
+    private async void btnKobo_Click(object? sender, RoutedEventArgs e)
+    {
+        // Propone la cartella dell'ultimo .cbz creato, se c'è
+        string? folder = _lastFile is not null ? Path.GetDirectoryName(_lastFile) : null;
+        await new KoboWindow(folder).ShowDialog(this);
+    }
+
+    /// <summary>Apre una cartella, o la cartella di un file selezionandolo, in Esplora file / Finder.</summary>
+    public static void OpenInFileManager(string path)
+    {
+        bool isFile = File.Exists(path);
         if (OperatingSystem.IsWindows())
-            Process.Start("explorer.exe", hasFile ? $"/select,\"{_lastFile}\"" : $"\"{folder}\"");
+            Process.Start("explorer.exe", isFile ? $"/select,\"{path}\"" : $"\"{path}\"");
         else if (OperatingSystem.IsMacOS())
-            Process.Start("open", hasFile ? ["-R", _lastFile!] : [folder!]);
+            Process.Start("open", isFile ? ["-R", path] : [path]);
         else
-            Process.Start("xdg-open", hasFile ? Path.GetDirectoryName(_lastFile)! : folder!);
+            Process.Start("xdg-open", isFile ? Path.GetDirectoryName(path)! : path);
     }
 
     private void btnCancel_Click(object? sender, RoutedEventArgs e) => _cts?.Cancel();
@@ -105,7 +117,7 @@ public partial class MainWindow : Window
         btnStart.IsEnabled = !running;
         btnCancel.IsEnabled = running;
         txtUrls.IsReadOnly = txtName.IsReadOnly = txtFolder.IsReadOnly = running;
-        btnBrowse.IsEnabled = numMin.IsEnabled = chkShow.IsEnabled = !running;
+        btnBrowse.IsEnabled = numMin.IsEnabled = chkShow.IsEnabled = btnKobo.IsEnabled = !running;
         progress.IsIndeterminate = running;
     }
 
