@@ -69,12 +69,12 @@ jobs:
           sed "s/__VERSION__/$VERSION/g" .github/macos/Info.plist > $APP/Contents/Info.plist
           # Il driver di Playwright deve restare eseguibile
           find $APP/Contents/MacOS/.playwright -name node -type f -exec chmod +x {} +
-          # Firma ad-hoc (gratuita): prima ogni binario, poi il bundle
-          find $APP/Contents/MacOS -type f | while read -r f; do
-            if file "$f" | grep -q Mach-O; then codesign --force --sign - "$f"; fi
-          done
+          # Firma ad-hoc (gratuita): prima ogni file in Contents/MacOS (anche le .dll, che macOS
+          # considera parti del codice), poi il bundle, che firma anche l'eseguibile principale
+          find $APP/Contents/MacOS -type f ! -path "$APP/Contents/MacOS/AutoMangator" -print0 \
+            | xargs -0 codesign --force --sign -
           codesign --force --sign - $APP
-          codesign --verify --strict --verbose=2 $APP
+          codesign --verify --deep --strict --verbose=2 $APP
 
       - name: Prova su una pagina vera (scarica anche WebKit)
         run: |
