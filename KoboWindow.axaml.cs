@@ -41,45 +41,19 @@ public partial class KoboWindow : Window
         // Se gli EPUB erano già stati creati, ripropone i dati usati l'ultima volta
         if (EpubMaker.TryReadExisting(folder) is { } info)
         {
-            Fill(info);
+            series.Fill(info);
             Log("Dati della serie ripresi dagli EPUB già creati in questa cartella.");
         }
-        else if (string.IsNullOrWhiteSpace(txtSeries.Text))
+        else if (series.Series.Length == 0)
         {
-            txtSeries.Text = Path.GetFileName(folder.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+            series.Series = Path.GetFileName(folder.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
         }
         Log(_chapters.Count == 0 ? "Nessun file .cbz in questa cartella." : $"Trovati {_chapters.Count} capitoli.");
     }
 
-    private void Fill(BookInfo b)
-    {
-        txtSeries.Text = b.Series;
-        txtWriter.Text = b.Writer;
-        txtArtist.Text = b.Artist;
-        txtPublisher.Text = b.Publisher;
-        txtYear.Text = b.Year;
-        txtGenre.Text = b.Genre;
-        txtLanguage.Text = b.Language;
-        txtSummary.Text = b.Summary;
-        chkRtl.IsChecked = b.RightToLeft;
-    }
-
-    private BookInfo Read() => new()
-    {
-        Series = (txtSeries.Text ?? "").Trim(),
-        Writer = txtWriter.Text ?? "",
-        Artist = txtArtist.Text ?? "",
-        Publisher = txtPublisher.Text ?? "",
-        Year = txtYear.Text ?? "",
-        Genre = txtGenre.Text ?? "",
-        Language = txtLanguage.Text ?? "",
-        Summary = txtSummary.Text ?? "",
-        RightToLeft = chkRtl.IsChecked == true,
-    };
-
     private async void btnCreate_Click(object? sender, RoutedEventArgs e)
     {
-        var book = Read();
+        var book = series.Read();
         if (_chapters.Count == 0) { Log("Scegli prima una cartella con dei file .cbz."); return; }
         if (book.Series.Length == 0) { Log("Il nome della serie è obbligatorio."); return; }
         var dup = _chapters.GroupBy(c => c.Number.Trim()).FirstOrDefault(g => g.Count() > 1);

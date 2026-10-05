@@ -48,8 +48,7 @@ public static partial class EpubMaker
             .Select(f =>
             {
                 string name = Path.GetFileNameWithoutExtension(f);
-                var m = LastNumber().Match(name);
-                return new ChapterInfo { CbzPath = f, Number = m.Success ? NormalizeNumber(m.Value) : "", Title = name };
+                return new ChapterInfo { CbzPath = f, Number = NumberFromName(name) ?? "", Title = name };
             }).ToList();
 
         // I file senza numero nel nome vanno in coda, dopo il numero più alto
@@ -61,11 +60,21 @@ public static partial class EpubMaker
         return chapters.OrderBy(c => ParseNumber(c.Number)).ThenBy(c => c.FileName, StringComparer.CurrentCultureIgnoreCase).ToList();
     }
 
+    /// <summary>L'ultimo numero nel nome ("Capitolo 12" -> "12", "Cap. 12,5" -> "12.5"), o null se non ce ne sono.</summary>
+    public static string? NumberFromName(string name)
+    {
+        var m = LastNumber().Match(name);
+        return m.Success ? NormalizeNumber(m.Value) : null;
+    }
+
     /// <summary>Rilegge i dati comuni da un EPUB già creato in precedenza, se c'è.</summary>
     public static BookInfo? TryReadExisting(string folder)
     {
-        string kobo = Path.Combine(folder, OutputFolderName);
-        string? epub = Directory.Exists(kobo) ? Directory.GetFiles(kobo, "*.epub").Order().FirstOrDefault() : null;
+        // Nella sottocartella Kobo (finestra "EPUB per Kobo") o nella cartella stessa (finestra principale)
+        string? epub = new[] { Path.Combine(folder, OutputFolderName), folder }
+            .Where(Directory.Exists)
+            .Select(d => Directory.GetFiles(d, "*.epub").Order().FirstOrDefault())
+            .FirstOrDefault(f => f is not null);
         if (epub is null) return null;
         try
         {

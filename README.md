@@ -37,6 +37,11 @@ Per ogni capitolo viene creato, nella sottocartella `Kobo`, un `.kepub.epub` a l
 
 Basta copiare gli EPUB nel Kobo collegato via USB. Riaprendo la stessa cartella, i dati della serie vengono riproposti.
 
+Si può anche fare tutto in un passaggio dalla finestra principale: spuntando **Crea EPUB per Kobo** compaiono gli stessi
+campi e ogni pagina scaricata diventa direttamente un EPUB. Il **numero del capitolo** si può indicare (con più indirizzi
+aumenta di 1 per ciascuno) oppure lasciare vuoto per prenderlo dal titolo della pagina; il `.cbz` viene conservato solo
+se si spunta **Conserva anche il file .cbz**.
+
 ## Da terminale
 - `AutoMangator --cli <indirizzo> [cartella]`: crea il `.cbz` senza aprire la finestra.
 - `AutoMangator --epub <cartella> <serie> [autore]`: crea gli EPUB per Kobo dai `.cbz` della cartella.

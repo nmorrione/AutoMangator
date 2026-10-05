@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using System.Globalization;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
@@ -9,6 +11,7 @@ public partial class MainWindow : Window
 {
     private CancellationTokenSource? _cts;
     private string? _lastFile;
+    private double _epubGrowth; // di quanto è stata allungata la finestra per il pannello EPUB
 
     public MainWindow()
     {
@@ -57,6 +60,40 @@ public partial class MainWindow : Window
 
     private void btnCancel_Click(object? sender, RoutedEventArgs e) => _cts?.Cancel();
 
+    private void chkEpub_IsCheckedChanged(object? sender, RoutedEventArgs e)
+    {
+        bool on = chkEpub.IsChecked == true;
+        if (pnlEpub.IsVisible == on) return;
+        pnlEpub.IsVisible = on;
+        btnStart.Content = on ? "Crea EPUB" : "Crea CBZ";
+
+        // Allunga la finestra quanto il pannello (senza superare lo schermo) e,
+        // togliendo la spunta, la riaccorcia di quanto era stata allungata
+        if (on)
+        {
+            pnlEpub.Measure(new Size(Math.Max(0, Bounds.Width - 24), double.PositiveInfinity));
+            double before = Height;
+            Height += pnlEpub.DesiredSize.Height + 4;
+            if (Screens.ScreenFromWindow(this) is { } screen)
+            {
+                // Resta dentro l'area utile dello schermo (barra delle applicazioni / Dock esclusi),
+                // spostando la finestra più in alto se il fondo finirebbe fuori
+                var area = screen.WorkingArea;
+                const int frame = 40; // barra del titolo e bordi, in pixel logici
+                Height = Math.Min(Height, Math.Max(before, area.Height / screen.Scaling - frame));
+                int bottom = Position.Y + (int)((Height + frame) * screen.Scaling);
+                if (bottom > area.Bottom)
+                    Position = new PixelPoint(Position.X, Math.Max(area.Y, Position.Y - (bottom - area.Bottom)));
+            }
+            _epubGrowth = Height - before;
+        }
+        else
+        {
+            Height = Math.Max(MinHeight, Height - _epubGrowth);
+            _epubGrowth = 0;
+        }
+    }
+
     private async void btnStart_Click(object? sender, RoutedEventArgs e)
     {
         var urls = (txtUrls.Text ?? "").Split('\n').Select(l => l.Trim()).Where(l => l.Length > 0).ToList();
@@ -70,6 +107,26 @@ public partial class MainWindow : Window
         string folder = (txtFolder.Text ?? "").Trim();
         string? baseName = string.IsNullOrWhiteSpace(txtName.Text) ? null : txtName.Text.Trim();
         int minSide = (int)(numMin.Value ?? 300);
+
+        // Opzioni EPUB: dati della serie e numero del primo capitolo
+        BookInfo? book = null;
+        double? firstChapter = null;
+        bool keepCbz = chkKeepCbz.IsChecked == true;
+        if (chkEpub.IsChecked == true)
+        {
+            book = series.Read();
+            if (book.Series.Length == 0) { Log("Per creare gli EPUB serve il nome della serie."); return; }
+            string start = (txtChapter.Text ?? "").Trim().Replace(',', '.');
+            if (start.Length > 0)
+            {
+                if (!double.TryParse(start, NumberStyles.Float, CultureInfo.InvariantCulture, out var n))
+                {
+                    Log($"Numero capitolo non valido: {txtChapter.Text}");
+                    return;
+                }
+                firstChapter = n;
+            }
+        }
 
         SetRunning(true);
         _cts = new CancellationTokenSource();
@@ -85,7 +142,23 @@ public partial class MainWindow : Window
                 try
                 {
                     _lastFile = await maker.CreateAsync(urls[i], folder, name, minSide, log, _cts.Token);
-                    Log($"Creato {_lastFile}");
+                    if (book is null)
+                    {
+                        Log($"Creato {_lastFile}");
+                    }
+                    else
+                    {
+                        // Numero: quello indicato (+1 per ogni indirizzo), altrimenti dal titolo della pagina
+                        string number = firstChapter is { } first
+                            ? (first + i).ToString(CultureInfo.InvariantCulture)
+                            : EpubMaker.NumberFromName(Path.GetFileNameWithoutExtension(_lastFile)) ?? (i + 1).ToString(CultureInfo.InvariantCulture);
+                        var chapter = new ChapterInfo { CbzPath = _lastFile, Number = number };
+                        string cbz = _lastFile;
+                        _lastFile = await Task.Run(() => EpubMaker.Create(book, chapter, folder));
+                        Log($"Capitolo {number}: creato {_lastFile}");
+                        if (keepCbz) Log($"Conservato {cbz}");
+                        else File.Delete(cbz);
+                    }
                     ok++;
                 }
                 catch (Exception ex) when (ex is not OperationCanceledException)
@@ -118,6 +191,7 @@ public partial class MainWindow : Window
         btnCancel.IsEnabled = running;
         txtUrls.IsReadOnly = txtName.IsReadOnly = txtFolder.IsReadOnly = running;
         btnBrowse.IsEnabled = numMin.IsEnabled = chkShow.IsEnabled = btnKobo.IsEnabled = !running;
+        chkEpub.IsEnabled = pnlEpub.IsEnabled = !running;
         progress.IsIndeterminate = running;
     }
 

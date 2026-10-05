@@ -16,32 +16,7 @@
     </Grid>
 
     <!-- Dati comuni a tutti i capitoli -->
-    <Grid Grid.Row="2" Margin="0,10,0,0" ColumnDefinitions="Auto,*,16,Auto,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto"
-          RowSpacing="6" ColumnSpacing="8">
-      <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="Serie *" FontWeight="SemiBold" />
-      <TextBox   Grid.Row="0" Grid.Column="1" x:Name="txtSeries" />
-      <TextBlock Grid.Row="0" Grid.Column="3" VerticalAlignment="Center" Text="Lingua" />
-      <TextBox   Grid.Row="0" Grid.Column="4" x:Name="txtLanguage" Text="it" PlaceholderText="it, en, ja..." />
-
-      <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Text="Autore (testi)" />
-      <TextBox   Grid.Row="1" Grid.Column="1" x:Name="txtWriter" />
-      <TextBlock Grid.Row="1" Grid.Column="3" VerticalAlignment="Center" Text="Disegnatore" />
-      <TextBox   Grid.Row="1" Grid.Column="4" x:Name="txtArtist" PlaceholderText="se diverso dall'autore" />
-
-      <TextBlock Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Text="Editore" />
-      <TextBox   Grid.Row="2" Grid.Column="1" x:Name="txtPublisher" />
-      <TextBlock Grid.Row="2" Grid.Column="3" VerticalAlignment="Center" Text="Anno" />
-      <TextBox   Grid.Row="2" Grid.Column="4" x:Name="txtYear" />
-
-      <TextBlock Grid.Row="3" Grid.Column="0" VerticalAlignment="Center" Text="Genere" />
-      <TextBox   Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="4" x:Name="txtGenre" PlaceholderText="separati da virgola, es. Avventura, Fantasy" />
-
-      <TextBlock Grid.Row="4" Grid.Column="0" VerticalAlignment="Top" Margin="0,6,0,0" Text="Trama" />
-      <TextBox   Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="4" x:Name="txtSummary" Height="70"
-                 AcceptsReturn="True" TextWrapping="Wrap" />
-    </Grid>
-
-    <CheckBox Grid.Row="3" x:Name="chkRtl" Content="Manga: lettura da destra a sinistra" />
+    <local:SeriesInfoPanel Grid.Row="2" Margin="0,10,0,0" x:Name="series" />
 
     <!-- Capitoli -->
     <Grid Grid.Row="4" Margin="0,8,0,0" ColumnDefinitions="80,*,240" ColumnSpacing="8">
