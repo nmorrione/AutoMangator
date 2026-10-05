@@ -21,6 +21,9 @@ Al posto del vecchio flusso manuale (Ctrl+S della pagina → copia delle sole im
 - Windows 10/11 con Microsoft Edge
 - Per compilare: .NET 10 SDK
 
+## Download
+L'exe portable già pronto (un unico file, non serve installare nulla) è nelle [Release](https://github.com/nmorrione/AutoMangator/releases/latest).
+
 ## Compilare
 Exe singolo portable (runtime .NET incluso) in `publish-portable\`:
 ```
@@ -30,3 +33,6 @@ Versione a cartella, più leggera (richiede il runtime .NET 10) in `publish\`:
 ```
 dotnet publish AutoMangator.csproj -p:PublishProfile=FolderProfile
 ```
+
+## Licenza
+[MIT](LICENSE)
