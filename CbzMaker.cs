@@ -5,8 +5,8 @@ using Microsoft.Playwright;
 namespace AutoMangator;
 
 /// <summary>
-/// Apre pagine web in Microsoft Edge (via Playwright), raccoglie le immagini nell'ordine
-/// in cui compaiono e le salva in un file .cbz (zip senza compressione).
+/// Apre pagine web con Playwright (Edge su Windows, WebKit altrove), raccoglie le immagini
+/// nell'ordine in cui compaiono e le salva in un file .cbz (zip senza compressione).
 /// Un'istanza tiene aperto il browser, così più pagine riusano lo stesso.
 /// </summary>
 public sealed class CbzMaker : IAsyncDisposable
@@ -20,12 +20,35 @@ public sealed class CbzMaker : IAsyncDisposable
         _browser = browser;
     }
 
-    public static async Task<CbzMaker> StartAsync(bool showBrowser)
+    public static async Task<CbzMaker> StartAsync(bool showBrowser, IProgress<string> log)
     {
+        if (!OperatingSystem.IsWindows())
+            await EnsureWebKitAsync(log);
+
         var playwright = await Playwright.CreateAsync();
-        // Usa Microsoft Edge già installato: nessun browser da scaricare
-        var browser = await playwright.Chromium.LaunchAsync(new() { Channel = "msedge", Headless = !showBrowser });
+        var browser = OperatingSystem.IsWindows()
+            // Usa Microsoft Edge già installato: nessun browser da scaricare
+            ? await playwright.Chromium.LaunchAsync(new() { Channel = "msedge", Headless = !showBrowser })
+            // WebKit (il motore di Safari) di Playwright, scaricato al primo avvio
+            : await playwright.Webkit.LaunchAsync(new() { Headless = !showBrowser });
         return new CbzMaker(playwright, browser);
+    }
+
+    // Scarica WebKit se manca; se è già presente l'installer termina subito
+    private static async Task EnsureWebKitAsync(IProgress<string> log)
+    {
+        string cache = OperatingSystem.IsMacOS()
+            ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Library", "Caches", "ms-playwright")
+            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".cache", "ms-playwright");
+        bool present = Directory.Exists(cache) && Directory.EnumerateDirectories(cache, "webkit-*").Any();
+        if (!present)
+            log.Report("Scarico WebKit (solo al primo avvio, può richiedere qualche minuto)...");
+
+        int exitCode = await Task.Run(() => Microsoft.Playwright.Program.Main(["install", "webkit"]));
+        if (exitCode != 0)
+            throw new InvalidOperationException($"Installazione di WebKit non riuscita (codice {exitCode}).");
+        if (!present)
+            log.Report("WebKit pronto.");
     }
 
     /// <summary>Crea il .cbz e restituisce il percorso del file creato.</summary>

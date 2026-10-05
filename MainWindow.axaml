@@ -1,0 +1,40 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="AutoMangator.MainWindow"
+        Title="AutoMangator"
+        Width="760" Height="640" MinWidth="600" MinHeight="520"
+        WindowStartupLocation="CenterScreen">
+
+  <Grid Margin="12" RowDefinitions="Auto,110,Auto,Auto,Auto,Auto,Auto,Auto,Auto,*" RowSpacing="4">
+
+    <TextBlock Grid.Row="0" Text="Indirizzi (uno per riga):" />
+    <TextBox Grid.Row="1" x:Name="txtUrls" AcceptsReturn="True" TextWrapping="NoWrap" />
+
+    <TextBlock Grid.Row="2" Margin="0,8,0,0"
+               Text="Nome file (opzionale; vuoto = titolo della pagina; con più indirizzi viene numerato):" />
+    <TextBox Grid.Row="3" x:Name="txtName" />
+
+    <TextBlock Grid.Row="4" Margin="0,8,0,0" Text="Cartella di destinazione:" />
+    <Grid Grid.Row="5" ColumnDefinitions="*,Auto" ColumnSpacing="6">
+      <TextBox x:Name="txtFolder" />
+      <Button Grid.Column="1" x:Name="btnBrowse" Content="Sfoglia..." Click="btnBrowse_Click" />
+    </Grid>
+
+    <StackPanel Grid.Row="6" Margin="0,8,0,0" Orientation="Horizontal" Spacing="10">
+      <TextBlock VerticalAlignment="Center" Text="Lato minimo immagine (px):" />
+      <NumericUpDown x:Name="numMin" Width="130" Minimum="0" Maximum="5000" Increment="50" Value="300" FormatString="0" />
+      <CheckBox x:Name="chkShow" Content="Mostra il browser (se il sito blocca o chiede una verifica)" />
+    </StackPanel>
+
+    <StackPanel Grid.Row="7" Margin="0,8,0,0" Orientation="Horizontal" Spacing="8">
+      <Button x:Name="btnStart" Content="Crea CBZ" Classes="accent" MinWidth="120" Click="btnStart_Click" />
+      <Button x:Name="btnCancel" Content="Annulla" MinWidth="100" IsEnabled="False" Click="btnCancel_Click" />
+      <Button x:Name="btnOpenFolder" Content="Apri cartella" MinWidth="120" Click="btnOpenFolder_Click" />
+    </StackPanel>
+
+    <ProgressBar Grid.Row="8" x:Name="progress" Margin="0,6,0,0" />
+
+    <TextBox Grid.Row="9" x:Name="txtLog" IsReadOnly="True" AcceptsReturn="True" TextWrapping="NoWrap"
+             FontFamily="Cascadia Mono,Consolas,Menlo,monospace" FontSize="12" />
+  </Grid>
+</Window>

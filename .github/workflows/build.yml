@@ -1,0 +1,109 @@
+# Compila AutoMangator per Windows e macOS, prova gli eseguibili su una pagina vera
+# e, se il push è un tag "v*" (es. v1.2.0), pubblica la Release con entrambi i file.
+# Avviabile anche a mano da GitHub (Actions > Build > Run workflow): in quel caso
+# i file compilati restano scaricabili come artifact, senza creare una Release.
+
+name: Build
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  TEST_URL: https://en.wikipedia.org/wiki/Comics
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Versione dal tag
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then echo "VERSION_ARG=-p:Version=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"; fi
+
+      - name: Pubblica exe portable
+        run: dotnet publish AutoMangator.csproj -p:PublishProfile=Portable ${{ env.VERSION_ARG }}
+
+      - name: Prova su una pagina vera
+        run: |
+          $out = & .\publish-portable\AutoMangator.exe --cli $env:TEST_URL "$env:RUNNER_TEMP\cbz" | Out-String
+          Write-Host $out
+          if ($LASTEXITCODE -ne 0 -or -not (Get-ChildItem "$env:RUNNER_TEMP\cbz\*.cbz")) { exit 1 }
+
+      - run: Move-Item publish-portable\AutoMangator.exe AutoMangator-Windows-x64.exe
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: AutoMangator-Windows-x64.exe
+
+  macos:
+    runs-on: macos-latest   # Apple Silicon
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Versione dal tag
+        run: |
+          VERSION=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' AutoMangator.csproj)
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then VERSION="${GITHUB_REF_NAME#v}"; fi
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      - name: Pubblica
+        run: dotnet publish AutoMangator.csproj -c Release -r osx-arm64 --self-contained -p:DebugType=none -p:Version=$VERSION -o out
+
+      - name: Crea AutoMangator.app
+        run: |
+          APP=AutoMangator.app
+          mkdir -p $APP/Contents/MacOS $APP/Contents/Resources
+          cp -R out/. $APP/Contents/MacOS/
+          sed "s/__VERSION__/$VERSION/g" .github/macos/Info.plist > $APP/Contents/Info.plist
+          # Il driver di Playwright deve restare eseguibile
+          find $APP/Contents/MacOS/.playwright -name node -type f -exec chmod +x {} +
+          # Firma ad-hoc (gratuita): prima ogni binario, poi il bundle
+          find $APP/Contents/MacOS -type f | while read -r f; do
+            if file "$f" | grep -q Mach-O; then codesign --force --sign - "$f"; fi
+          done
+          codesign --force --sign - $APP
+          codesign --verify --strict --verbose=2 $APP
+
+      - name: Prova su una pagina vera (scarica anche WebKit)
+        run: |
+          AutoMangator.app/Contents/MacOS/AutoMangator --cli "$TEST_URL" "$RUNNER_TEMP/cbz"
+          ls "$RUNNER_TEMP"/cbz/*.cbz
+
+      - name: Comprimi
+        run: ditto -c -k --keepParent AutoMangator.app AutoMangator-macOS-AppleSilicon.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos
+          path: AutoMangator-macOS-AppleSilicon.zip
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [windows, macos]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+      - name: Pubblica la Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            AutoMangator-Windows-x64.exe AutoMangator-macOS-AppleSilicon.zip \
+            --title "AutoMangator ${GITHUB_REF_NAME#v}" \
+            --notes-file .github/release-notes.md
