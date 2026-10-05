@@ -67,12 +67,16 @@ jobs:
           mkdir -p $APP/Contents/MacOS $APP/Contents/Resources
           cp -R out/. $APP/Contents/MacOS/
           sed "s/__VERSION__/$VERSION/g" .github/macos/Info.plist > $APP/Contents/Info.plist
-          # Il driver di Playwright deve restare eseguibile
-          find $APP/Contents/MacOS/.playwright -name node -type f -exec chmod +x {} +
+          # Il driver di Playwright va in Resources: in MacOS ogni cartella deve essere un bundle.
+          # L'app lo ritrova tramite PLAYWRIGHT_DRIVER_SEARCH_PATH (vedi CbzMaker.StartAsync)
+          mv $APP/Contents/MacOS/.playwright $APP/Contents/Resources/
+          find $APP/Contents/Resources/.playwright -name node -type f -exec chmod +x {} +
           # Firma ad-hoc (gratuita): prima ogni file in Contents/MacOS (anche le .dll, che macOS
-          # considera parti del codice), poi il bundle, che firma anche l'eseguibile principale
+          # considera parti del codice) e il node del driver, poi il bundle, che firma anche
+          # l'eseguibile principale
           find $APP/Contents/MacOS -type f ! -path "$APP/Contents/MacOS/AutoMangator" -print0 \
             | xargs -0 codesign --force --sign -
+          find $APP/Contents/Resources/.playwright -name node -type f -exec codesign --force --sign - {} +
           codesign --force --sign - $APP
           codesign --verify --deep --strict --verbose=2 $APP
 

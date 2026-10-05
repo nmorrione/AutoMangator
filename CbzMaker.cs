@@ -22,6 +22,12 @@ public sealed class CbzMaker : IAsyncDisposable
 
     public static async Task<CbzMaker> StartAsync(bool showBrowser, IProgress<string> log)
     {
+        // Nell'app macOS il driver di Playwright sta in Contents/Resources/.playwright
+        // (in Contents/MacOS la firma del bundle non accetta cartelle che non siano bundle)
+        string resources = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "Resources"));
+        if (OperatingSystem.IsMacOS() && Directory.Exists(Path.Combine(resources, ".playwright")))
+            Environment.SetEnvironmentVariable("PLAYWRIGHT_DRIVER_SEARCH_PATH", resources);
+
         if (!OperatingSystem.IsWindows())
             await EnsureWebKitAsync(log);
 
