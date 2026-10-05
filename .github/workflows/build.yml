@@ -67,6 +67,7 @@ jobs:
           mkdir -p $APP/Contents/MacOS $APP/Contents/Resources
           cp -R out/. $APP/Contents/MacOS/
           sed "s/__VERSION__/$VERSION/g" .github/macos/Info.plist > $APP/Contents/Info.plist
+          cp Assets/AppIcon.icns $APP/Contents/Resources/
           # Il driver di Playwright va in Resources: in MacOS ogni cartella deve essere un bundle.
           # L'app lo ritrova tramite PLAYWRIGHT_DRIVER_SEARCH_PATH (vedi CbzMaker.StartAsync)
           mv $APP/Contents/MacOS/.playwright $APP/Contents/Resources/

@@ -10,6 +10,8 @@
   <string>com.github.nmorrione.automangator</string>
   <key>CFBundleExecutable</key>
   <string>AutoMangator</string>
+  <key>CFBundleIconFile</key>
+  <string>AppIcon</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>CFBundleVersion</key>

@@ -9,8 +9,16 @@
     <AssemblyName>AutoMangator</AssemblyName>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\icon.ico</ApplicationIcon>
     <Version>1.1.0</Version>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- icon.svg è la sorgente; icon.ico (exe Windows), AppIcon.icns (app macOS) e icon.png
+         (finestra) si rigenerano con Assets\make-icons.cs, uno script a sé che non fa parte dell'app -->
+    <AvaloniaResource Include="Assets\icon.png" />
+    <Compile Remove="Assets\make-icons.cs" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="12.1.3" />
