@@ -9,6 +9,11 @@ L'app non è firmata da Apple (richiederebbe un abbonamento a pagamento), quindi
 
 Alla prima conversione l'app scarica WebKit, il motore di Safari (una sola volta, circa un centinaio di MB).
 
+## EPUB per Kobo
+Il Kobo non legge i dati contenuti nei `.cbz`. AutoMangator può creare per ogni capitolo un `.kepub.epub` con serie,
+numero, autore e gli altri dati: spuntando **Crea EPUB per Kobo** nella finestra principale mentre scarichi, oppure
+con **EPUB per Kobo...** partendo da una cartella di `.cbz` già scaricati. Basta poi copiarli nel Kobo via USB.
+
 ## Browser usato
 - Windows: Microsoft Edge, già presente nel sistema.
 - macOS: WebKit di Playwright, scaricato automaticamente.
