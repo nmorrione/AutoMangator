@@ -23,6 +23,7 @@ public partial class SeriesInfoPanel : UserControl
         txtLanguage.Text = b.Language;
         txtSummary.Text = b.Summary;
         chkRtl.IsChecked = b.RightToLeft;
+        chkKobo.IsChecked = b.Kobo;
     }
 
     public BookInfo Read() => new()
@@ -36,5 +37,6 @@ public partial class SeriesInfoPanel : UserControl
         Language = txtLanguage.Text ?? "",
         Summary = txtSummary.Text ?? "",
         RightToLeft = chkRtl.IsChecked == true,
+        Kobo = chkKobo.IsChecked == true,
     };
 }

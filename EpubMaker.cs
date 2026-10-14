@@ -20,6 +20,13 @@ public sealed class BookInfo
     public string Language { get; set; } = "it";
     public string Summary { get; set; } = "";
     public bool RightToLeft { get; set; }
+    /// <summary>
+    /// Estensione .kepub.epub invece di .epub: il contenuto è lo stesso, ma così il Kobo apre il file
+    /// col suo lettore, che gestisce bene le pagine a layout fisso dei fumetti.
+    /// </summary>
+    public bool Kobo { get; set; }
+
+    public string Extension => Kobo ? ".kepub.epub" : ".epub";
 }
 
 /// <summary>Un capitolo: il .cbz di partenza con numero e titolo modificabili.</summary>
@@ -32,13 +39,16 @@ public sealed class ChapterInfo
 }
 
 /// <summary>
-/// Trasforma un .cbz in un .kepub.epub a layout fisso per Kobo, con titolo, autore, serie
-/// e numero del capitolo nei metadati. Le immagini restano quelle originali; solo i formati
-/// che Kobo non mostra (WebP, AVIF) vengono convertiti in JPEG.
+/// Trasforma un .cbz in un EPUB 3 standard a layout fisso, con titolo, autore, serie e numero del
+/// capitolo nei metadati (.kepub.epub se ottimizzato per Kobo). Le immagini restano quelle originali;
+/// solo WebP e AVIF, che molti ebook reader non mostrano, vengono convertiti in JPEG.
 /// </summary>
 public static partial class EpubMaker
 {
-    public const string OutputFolderName = "Kobo";
+    /// <summary>Sottocartella dove "Converti CBZ in EPUB" mette gli EPUB.</summary>
+    public const string OutputFolderName = "EPUB";
+    // Nome usato fino alla 1.5: le cartelle già create continuano a essere lette
+    private const string LegacyOutputFolderName = "Kobo";
 
     /// <summary>Elenca i .cbz della cartella, con il numero preso dal nome del file.</summary>
     public static List<ChapterInfo> LoadChapters(string folder)
@@ -70,8 +80,9 @@ public static partial class EpubMaker
     /// <summary>Rilegge i dati comuni da un EPUB già creato in precedenza, se c'è.</summary>
     public static BookInfo? TryReadExisting(string folder)
     {
-        // Nella sottocartella Kobo (finestra "Converti CBZ in EPUB Kobo") o nella cartella stessa (finestra principale)
-        string? epub = new[] { Path.Combine(folder, OutputFolderName), folder }
+        // Nella sottocartella EPUB (finestra "Converti CBZ in EPUB"), in quella Kobo delle versioni
+        // precedenti o nella cartella stessa (finestra principale)
+        string? epub = new[] { Path.Combine(folder, OutputFolderName), Path.Combine(folder, LegacyOutputFolderName), folder }
             .Where(Directory.Exists)
             .Select(d => Directory.GetFiles(d, "*.epub").Order().FirstOrDefault())
             .FirstOrDefault(f => f is not null);
@@ -99,12 +110,13 @@ public static partial class EpubMaker
                 Language = meta.Element(dc + "language")?.Value ?? "it",
                 Summary = meta.Element(dc + "description")?.Value ?? "",
                 RightToLeft = (string?)opf.Root.Element(ns + "spine")?.Attribute("page-progression-direction") == "rtl",
+                Kobo = epub.EndsWith(".kepub.epub", StringComparison.OrdinalIgnoreCase),
             };
         }
         catch (Exception ex) when (ex is IOException or InvalidDataException or System.Xml.XmlException) { return null; }
     }
 
-    /// <summary>Titolo mostrato dal Kobo: "Serie 012 - Titolo", così i capitoli restano in ordine.</summary>
+    /// <summary>Titolo mostrato dall'ebook reader: "Serie 012 - Titolo", così i capitoli restano in ordine.</summary>
     public static string BookTitle(BookInfo book, ChapterInfo ch)
     {
         string title = $"{book.Series} {PadNumber(ch.Number)}";
@@ -115,7 +127,7 @@ public static partial class EpubMaker
     public static string Create(BookInfo book, ChapterInfo ch, string outputFolder)
     {
         string title = BookTitle(book, ch);
-        string path = Path.Combine(outputFolder, CbzMaker.SafeFileName($"{book.Series} {PadNumber(ch.Number)}") + ".kepub.epub");
+        string path = Path.Combine(outputFolder, CbzMaker.SafeFileName($"{book.Series} {PadNumber(ch.Number)}") + book.Extension);
         // Stesso identificativo per lo stesso capitolo: ricreare l'EPUB non lo duplica
         return Write(book, [ch], title, NormalizeNumber(ch.Number), Identifier($"{book.Series.Trim().ToLowerInvariant()}|{NormalizeNumber(ch.Number)}"),
             path, chapterToc: false);
@@ -132,7 +144,7 @@ public static partial class EpubMaker
         string title = hasVolume ? $"{book.Series} Vol. {PadVolume(volume!)}" : $"{book.Series} {range}";
         string index = NormalizeNumber(hasVolume ? volume! : chapters[0].Number);
         string name = string.IsNullOrWhiteSpace(fileName) ? title : fileName.Trim();
-        string path = Path.Combine(outputFolder, CbzMaker.SafeFileName(name) + ".kepub.epub");
+        string path = Path.Combine(outputFolder, CbzMaker.SafeFileName(name) + book.Extension);
         return Write(book, chapters, title, index, Identifier($"{book.Series.Trim().ToLowerInvariant()}|volume|{title.ToLowerInvariant()}"),
             path, chapterToc: true);
     }
@@ -201,7 +213,7 @@ public static partial class EpubMaker
                 case SKEncodedImageFormat.Png: page = new(id, ".png", "image/png", w, h); break;
                 case SKEncodedImageFormat.Gif: page = new(id, ".gif", "image/gif", w, h); break;
                 default:
-                    // WebP, AVIF, ...: Kobo non li mostra negli EPUB
+                    // WebP, AVIF, ...: molti ebook reader (Kobo compreso) non li mostrano negli EPUB
                     using (var bmp = SKBitmap.Decode(data))
                     using (var img = SKImage.FromBitmap(bmp))
                     using (var jpg = img.Encode(SKEncodedImageFormat.Jpeg, 92))
@@ -238,7 +250,7 @@ public static partial class EpubMaker
             new XElement(ns + "meta", new XAttribute("refines", "#series"), new XAttribute("property", "collection-type"), "series"),
             new XElement(ns + "meta", new XAttribute("refines", "#series"), new XAttribute("property", "group-position"), index));
 
-        // Il primo autore è quello che Kobo mostra in libreria
+        // Il primo autore è quello che gli ebook reader mostrano in libreria
         void Creator(string id, string name, string role)
         {
             if (string.IsNullOrWhiteSpace(name)) return;

@@ -9,9 +9,9 @@ per pilotare il browser: Microsoft Edge su Windows, WebKit (scaricato al primo a
 | `CbzMaker.cs` | Apre la pagina, la scorre, raccoglie le immagini e scrive il `.cbz` |
 | `CbzMaker.Reader.cs` | Reader a una pagina per volta, protezione da popup/navigazioni, verifiche anti-bot |
 | `CbzMaker.List.cs` | Dalla pagina con la lista dei capitoli ricava gli indirizzi (gruppo di link con lo stesso schema) |
-| `EpubMaker.cs` | Da `.cbz` a `.kepub.epub` a layout fisso con i metadati della serie, anche come volume con indice |
+| `EpubMaker.cs` | Da `.cbz` a EPUB 3 a layout fisso con i metadati della serie, anche come volume con indice (`.kepub.epub` se ottimizzato per Kobo: cambia solo l'estensione) |
 | `MainWindow.axaml(.cs)` | Finestra principale |
-| `KoboWindow.axaml(.cs)` | Finestra "Converti CBZ in EPUB Kobo" per una cartella di `.cbz` |
+| `ConvertWindow.axaml(.cs)` | Finestra "Converti CBZ in EPUB" per una cartella di `.cbz` |
 | `SeriesInfoPanel.axaml(.cs)` | Campi della serie, condivisi dalle due finestre |
 | `Assets/` | Icona: `icon.svg` è la sorgente, il resto si rigenera con `make-icons.cs` |
 
@@ -26,7 +26,8 @@ dotnet publish AutoMangator.csproj -p:PublishProfile=Portable
 ## Da terminale
 - `AutoMangator --cli <indirizzo> [cartella] [--reader] [--show]`: crea il `.cbz` senza aprire la finestra
   (`--reader` forza lo sfoglio del reader, `--show` mostra il browser).
-- `AutoMangator --epub <cartella> <serie> [autore]`: crea gli EPUB per Kobo dai `.cbz` della cartella.
+- `AutoMangator --epub <cartella> <serie> [autore] [--kobo]`: crea gli EPUB dai `.cbz` della cartella, nella sottocartella `EPUB`
+  (`--kobo` li crea come `.kepub.epub`).
 
 ## Icone
 Dopo aver modificato `Assets/icon.svg`, dalla cartella `Assets`:

@@ -13,7 +13,7 @@ public partial class MainWindow : Window
 {
     private CancellationTokenSource? _cts;
     private string? _lastFile;
-    private double _epubGrowth; // di quanto è stata allungata la finestra per il pannello EPUB
+    private double _autoGrowth; // di quanto è stata allungata la finestra per far posto ai pannelli
     // Capitoli trovati con "Trova capitoli": numero e titolo noti per indirizzo
     private Dictionary<string, FoundChapter> _found = [];
 
@@ -43,11 +43,11 @@ public partial class MainWindow : Window
             OpenInFileManager(txtFolder.Text.Trim());
     }
 
-    private async void btnKobo_Click(object? sender, RoutedEventArgs e)
+    private async void btnConvert_Click(object? sender, RoutedEventArgs e)
     {
         // Propone la cartella dell'ultimo .cbz creato, se c'è
         string? folder = _lastFile is not null ? Path.GetDirectoryName(_lastFile) : null;
-        await new KoboWindow(folder).ShowDialog(this);
+        await new ConvertWindow(folder).ShowDialog(this);
     }
 
     /// <summary>Apre una cartella, o la cartella di un file selezionandolo, in Esplora file / Finder.</summary>
@@ -70,14 +70,29 @@ public partial class MainWindow : Window
         if (pnlEpub.IsVisible == on) return;
         pnlEpub.IsVisible = on;
         UpdateStartLabel();
+        FitHeight();
+    }
 
-        // Allunga la finestra quanto il pannello (senza superare lo schermo) e,
-        // togliendo la spunta, la riaccorcia di quanto era stata allungata
-        if (on)
+    private void chkVolume_IsCheckedChanged(object? sender, RoutedEventArgs e)
+    {
+        pnlVolumeNumber.IsVisible = chkVolume.IsChecked == true;
+        UpdateStartLabel();
+        FitHeight();
+    }
+
+    /// <summary>
+    /// Adatta l'altezza della finestra a quello che mostra: la allunga quando compaiono pannelli
+    /// (senza superare lo schermo) e, quando spariscono, la riaccorcia di quanto l'aveva allungata.
+    /// </summary>
+    private void FitHeight()
+    {
+        // Si misura il contenuto (non la ScrollViewer che lo contiene) con altezza libera
+        layout.Measure(new Size(Math.Max(0, Bounds.Width), double.PositiveInfinity));
+        double needed = layout.DesiredSize.Height;
+        if (needed > Height)
         {
-            pnlEpub.Measure(new Size(Math.Max(0, Bounds.Width - 24), double.PositiveInfinity));
             double before = Height;
-            Height += pnlEpub.DesiredSize.Height + 4;
+            Height = needed;
             if (Screens.ScreenFromWindow(this) is { } screen)
             {
                 // Resta dentro l'area utile dello schermo (barra delle applicazioni / Dock esclusi),
@@ -89,19 +104,14 @@ public partial class MainWindow : Window
                 if (bottom > area.Bottom)
                     Position = new PixelPoint(Position.X, Math.Max(area.Y, Position.Y - (bottom - area.Bottom)));
             }
-            _epubGrowth = Height - before;
+            _autoGrowth += Height - before;
         }
-        else
+        else if (_autoGrowth > 0)
         {
-            Height = Math.Max(MinHeight, Height - _epubGrowth);
-            _epubGrowth = 0;
+            double shrink = Math.Min(_autoGrowth, Height - needed);
+            Height -= shrink;
+            _autoGrowth -= shrink;
         }
-    }
-
-    private void chkVolume_IsCheckedChanged(object? sender, RoutedEventArgs e)
-    {
-        pnlVolumeNumber.IsVisible = chkVolume.IsChecked == true;
-        UpdateStartLabel();
     }
 
     // "Crea CBZ", "Crea EPUB", "Crea volume CBZ", "Crea volume EPUB"
@@ -257,7 +267,7 @@ public partial class MainWindow : Window
         public double? FirstChapter;
     }
 
-    // Un file per capitolo (.cbz, oppure .kepub.epub). Restituisce true se un sito ha chiesto la verifica anti-bot.
+    // Un file per capitolo (.cbz, oppure .epub / .kepub.epub). Restituisce true se un sito ha chiesto la verifica anti-bot.
     private async Task<bool> CreateChaptersAsync(CbzMaker maker, Job job, IProgress<string> log, CancellationToken ct)
     {
         int ok = 0;
@@ -354,7 +364,11 @@ public partial class MainWindow : Window
                 _lastFile = await Task.Run(() => EpubMaker.CreateVolume(book, chapters, job.VolumeNumber, job.Folder, job.BaseName));
                 Log($"Volume creato: {_lastFile}");
                 if (job.KeepCbz)
-                    Log($"Conservato {await Task.Run(() => CbzMaker.MergeCbz(chapters.Select(c => c.CbzPath), job.Folder, Path.GetFileName(_lastFile).Replace(".kepub.epub", "")))}");
+                {
+                    // Stesso nome del volume EPUB, senza estensione (.epub o .kepub.epub)
+                    string name = Path.GetFileName(_lastFile)[..^book.Extension.Length];
+                    Log($"Conservato {await Task.Run(() => CbzMaker.MergeCbz(chapters.Select(c => c.CbzPath), job.Folder, name))}");
+                }
             }
             else
             {
@@ -442,7 +456,7 @@ public partial class MainWindow : Window
         btnCancel.IsEnabled = running;
         txtUrls.IsReadOnly = txtName.IsReadOnly = txtFolder.IsReadOnly = running;
         txtListUrl.IsReadOnly = txtFrom.IsReadOnly = txtTo.IsReadOnly = running;
-        btnBrowse.IsEnabled = numMin.IsEnabled = chkShow.IsEnabled = chkReader.IsEnabled = btnKobo.IsEnabled = !running;
+        btnBrowse.IsEnabled = numMin.IsEnabled = chkShow.IsEnabled = chkReader.IsEnabled = btnConvert.IsEnabled = !running;
         chkEpub.IsEnabled = pnlEpub.IsEnabled = chkVolume.IsEnabled = !running;
         progress.IsIndeterminate = running;
     }

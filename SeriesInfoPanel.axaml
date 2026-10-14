@@ -1,7 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="AutoMangator.SeriesInfoPanel">
-  <!-- Dati della serie per gli EPUB Kobo: usato nella finestra principale e in "Converti CBZ in EPUB Kobo" -->
+  <!-- Dati della serie per gli EPUB: usato nella finestra principale e in "Converti CBZ in EPUB" -->
   <StackPanel Spacing="6">
     <Grid ColumnDefinitions="Auto,*,16,Auto,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="6" ColumnSpacing="8">
       <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="Serie *" FontWeight="SemiBold" />
@@ -26,6 +26,10 @@
       <TextBox   Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="4" x:Name="txtSummary" Height="70"
                  AcceptsReturn="True" TextWrapping="Wrap" />
     </Grid>
-    <CheckBox x:Name="chkRtl" Content="Manga: lettura da destra a sinistra" />
+    <WrapPanel Orientation="Horizontal" ItemSpacing="24">
+      <CheckBox x:Name="chkRtl" Content="Manga: lettura da destra a sinistra" />
+      <CheckBox x:Name="chkKobo" Content="Ottimizzato per Kobo (.kepub.epub)"
+                ToolTip.Tip="Spuntalo se leggi su un Kobo. Stesso EPUB, ma con estensione .kepub.epub: il Kobo lo apre col suo lettore, che mostra meglio le pagine dei fumetti. Gli altri ebook reader non lo riconoscono." />
+    </WrapPanel>
   </StackPanel>
 </UserControl>

@@ -6,7 +6,7 @@
 
 <p align="center">
   <b>Dalla pagina web al tuo ebook reader, in un clic.</b><br>
-  Incolla l'indirizzo di un capitolo: AutoMangator raccoglie le pagine e crea un fumetto <code>.cbz</code> o un <code>EPUB</code> pronto per Kobo.
+  Incolla l'indirizzo di un capitolo: AutoMangator raccoglie le pagine e crea un fumetto <code>.cbz</code> o un <code>EPUB</code> con titolo, serie e autore.
 </p>
 
 <p align="center">
@@ -32,7 +32,7 @@
 - 📋 **Dalla lista dei capitoli**: incolla la pagina che elenca i capitoli di una serie, scegli dal/al e gli indirizzi si compilano da soli.
 - 📦 **Più capitoli in coda**: un indirizzo per riga, un file per capitolo, oppure...
 - 📕 **...un unico volume**: tutti i capitoli in un solo file, con l'indice per saltare da un capitolo all'altro.
-- 📚 **EPUB per Kobo**: titolo, serie, numero del capitolo, autore e trama compaiono nella libreria del Kobo.
+- 📚 **EPUB con i dati della serie**: titolo, serie, numero del capitolo, autore e trama compaiono nella libreria dell'ebook reader. Con un clic, ottimizzato per **Kobo**.
 - 🖼️ **Immagini originali**: nessuna ricompressione, la qualità resta quella del sito.
 - 🛡️ **Niente pubblicità**: popup e nuove schede vengono chiusi, e la pagina non può essere portata su altri siti.
 - 💼 **Portable**: un unico file da avviare, niente installazione.
@@ -49,8 +49,19 @@ e premi **Trova capitoli**: gli indirizzi finiscono in **Indirizzi**, dove puoi 
 "La mia serie - Capitoli 001-010" (oppure come scrivi in **Nome file**). Se qualche capitolo non si riesce a scaricare,
 l'app te lo dice e ti chiede se creare comunque il volume con gli altri.
 
-Vuoi leggerlo sul **Kobo**? Spunta **Crea EPUB per Kobo**, scrivi il nome della serie (ed eventualmente autore, genere, trama...)
-e copia gli EPUB nel Kobo via USB. Con il volume puoi indicare anche il **Numero volume**: sul Kobo vedrai "La mia serie Vol. 01".
+**Un EPUB invece del CBZ?** Spunta **Crea EPUB**, scrivi il nome della serie (ed eventualmente autore, genere, trama...)
+e copia gli EPUB nell'ebook reader via USB. Con il volume puoi indicare anche il **Numero volume**: vedrai "La mia serie Vol. 01".
+Se leggi su un **Kobo**, spunta anche **Ottimizzato per Kobo**.
+
+### CBZ o EPUB? E per il Kobo?
+| Formato | Per chi |
+|---|---|
+| **CBZ** | Il formato classico dei fumetti: lo leggono i Kobo, PocketBook, molte app per tablet e PC. Contiene solo le pagine, senza titolo e autore. |
+| **EPUB** | Standard per tutti gli ebook reader (Kobo, PocketBook, Tolino, Apple Books, app Android...), con titolo, serie, autore, trama e indice. |
+| **EPUB + Ottimizzato per Kobo** | Stesso EPUB, ma chiamato `.kepub.epub`: così il Kobo lo apre col **suo** lettore, che mostra le pagine dei fumetti a schermo intero ed è più veloce a girare pagina. Gli altri ebook reader non lo riconoscono. |
+
+**Hai un Kindle?** Il Kindle non legge né CBZ né EPUB a pagine fisse. Il modo più semplice è passare i `.cbz` creati da AutoMangator a
+[Kindle Comic Converter](https://github.com/ciromattia/kcc), un programma gratuito pensato apposta per i fumetti su Kindle.
 
 ### Cosa spuntare
 Di solito **niente**: AutoMangator capisce da solo se la pagina mostra tutto il capitolo o è un reader da sfogliare.
@@ -59,10 +70,11 @@ Di solito **niente**: AutoMangator capisce da solo se la pagina mostra tutto il 
 |---|---|
 | **Mostra il browser** | Il sito ha una protezione anti-bot. Te lo dice l'app e spunta la casella per te: premi di nuovo il pulsante e, se nella finestra compare una verifica, completala tu. |
 | **Sfoglia il reader pagina per pagina** | È un reader a una pagina per volta, ma ti è arrivata solo la prima pagina. |
-| **Crea EPUB per Kobo** | Vuoi gli EPUB con i dati della serie invece del semplice `.cbz`. |
+| **Crea EPUB** | Vuoi gli EPUB con i dati della serie invece del semplice `.cbz`. |
+| **Ottimizzato per Kobo** | Leggi gli EPUB su un Kobo. |
 | **Crea singolo volume** | Vuoi tutti i capitoli in un unico file invece di uno per capitolo. |
 
-Hai già una cartella piena di `.cbz`? Il pulsante **Converti CBZ in EPUB Kobo...** li trasforma tutti in una volta, senza scaricare nulla, con una tabella per correggere numeri e titoli dei capitoli.
+Hai già una cartella piena di `.cbz`? Il pulsante **Converti CBZ in EPUB...** li trasforma tutti in una volta, senza scaricare nulla, con una tabella per correggere numeri e titoli dei capitoli.
 
 ## Installazione
 **Windows 10/11**: scarica `AutoMangator-Windows-x64.exe` e avvialo. Usa Microsoft Edge, già presente in Windows.
@@ -76,8 +88,15 @@ Alla prima conversione scarica WebKit, il motore di Safari (una volta sola).
 <details>
 <summary><b>Il Kobo mostra "Autore sconosciuto" e il nome del file</b></summary>
 
-È normale con i `.cbz`: il software del Kobo non legge i dati al loro interno. Usa **Crea EPUB per Kobo** e vedrai titolo, autore e copertina.
+È normale con i `.cbz`: il software del Kobo non legge i dati al loro interno. Usa **Crea EPUB** con **Ottimizzato per Kobo** e vedrai titolo, autore e copertina.
 La scheda **Serie** del Kobo, per i libri copiati via USB, richiede la mod gratuita [NickelSeries](https://pgaskin.net/kepubify/ns/).
+</details>
+
+<details>
+<summary><b>Sul Kobo le pagine del fumetto non sono a schermo intero</b></summary>
+
+Probabilmente l'EPUB è stato creato senza **Ottimizzato per Kobo**: con l'estensione `.epub` il Kobo usa il suo lettore più vecchio,
+che gestisce male le pagine a dimensione fissa. Ricrealo con la casella spuntata (anche dai `.cbz`, con **Converti CBZ in EPUB...**).
 </details>
 
 <details>

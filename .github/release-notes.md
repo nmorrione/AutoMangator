@@ -23,10 +23,14 @@ Durante il download popup e nuove schede vengono chiusi e la pagina non può ess
 - **Crea singolo volume**: tutti i capitoli in un solo file (CBZ o EPUB con indice per capitolo e numero del volume).
   Se un capitolo non si scarica, l'app chiede se creare comunque il volume con gli altri.
 
-## EPUB per Kobo
-Il Kobo non legge i dati contenuti nei `.cbz`. AutoMangator può creare per ogni capitolo un `.kepub.epub` con serie,
-numero, autore e gli altri dati: spuntando **Crea EPUB per Kobo** nella finestra principale mentre scarichi, oppure
-con **Converti CBZ in EPUB Kobo...** partendo da una cartella di `.cbz` già scaricati. Basta poi copiarli nel Kobo via USB.
+## EPUB
+Oltre al `.cbz`, AutoMangator crea **EPUB standard** con serie, numero, autore e gli altri dati, leggibili da tutti gli
+ebook reader: spuntando **Crea EPUB** nella finestra principale mentre scarichi, oppure con **Converti CBZ in EPUB...**
+partendo da una cartella di `.cbz` già scaricati. Basta poi copiarli nell'ebook reader via USB.
+
+Se leggi su un **Kobo**, spunta **Ottimizzato per Kobo**: l'EPUB viene creato come `.kepub.epub` e il Kobo lo apre col
+suo lettore, che mostra le pagine dei fumetti a schermo intero. Per il **Kindle** usa i `.cbz` con
+[Kindle Comic Converter](https://github.com/ciromattia/kcc).
 
 ## Browser usato
 - Windows: Microsoft Edge, già presente nel sistema.

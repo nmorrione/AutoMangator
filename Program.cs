@@ -17,9 +17,12 @@ internal static class Program
             return RunCliAsync(url, rest.Length > 0 ? rest[0] : DefaultOutputFolder,
                 args.Contains("--reader"), args.Contains("--show")).GetAwaiter().GetResult();
         }
-        // AutoMangator --epub <cartella con i .cbz> <serie> [autore]
+        // AutoMangator --epub <cartella con i .cbz> <serie> [autore] [--kobo]
         if (args is ["--epub", var folder, var series, ..])
-            return RunEpubCli(folder, new BookInfo { Series = series, Writer = args.Length > 3 ? args[3] : "" });
+        {
+            var rest = args.Skip(3).Where(a => a != "--kobo").ToArray();
+            return RunEpubCli(folder, new BookInfo { Series = series, Writer = rest.Length > 0 ? rest[0] : "", Kobo = args.Contains("--kobo") });
+        }
 
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
         return 0;

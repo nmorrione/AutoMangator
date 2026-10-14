@@ -4,15 +4,15 @@ using Avalonia.Platform.Storage;
 
 namespace AutoMangator;
 
-/// <summary>Chiede i dati della serie e crea un EPUB per Kobo da ogni .cbz di una cartella.</summary>
-public partial class KoboWindow : Window
+/// <summary>Chiede i dati della serie e crea un EPUB da ogni .cbz di una cartella.</summary>
+public partial class ConvertWindow : Window
 {
     private List<ChapterInfo> _chapters = [];
     private bool _running;
 
-    public KoboWindow() : this(null) { }
+    public ConvertWindow() : this(null) { }
 
-    public KoboWindow(string? folder)
+    public ConvertWindow(string? folder)
     {
         InitializeComponent();
         if (folder is not null && Directory.Exists(folder))
@@ -81,15 +81,15 @@ public partial class KoboWindow : Window
             }
         });
         Log($"Fatto: {ok} di {_chapters.Count} EPUB creati in {output}");
-        if (ok > 0) Log("Copiali nel Kobo collegato via USB (anche in una sottocartella).");
+        if (ok > 0) Log("Copiali nell'ebook reader collegato via USB (anche in una sottocartella).");
         SetRunning(false);
     }
 
     private void btnOpen_Click(object? sender, RoutedEventArgs e)
     {
         if (string.IsNullOrEmpty(txtFolder.Text)) return;
-        string kobo = Path.Combine(txtFolder.Text, EpubMaker.OutputFolderName);
-        MainWindow.OpenInFileManager(Directory.Exists(kobo) ? kobo : txtFolder.Text);
+        string epubs = Path.Combine(txtFolder.Text, EpubMaker.OutputFolderName);
+        MainWindow.OpenInFileManager(Directory.Exists(epubs) ? epubs : txtFolder.Text);
     }
 
     private void btnClose_Click(object? sender, RoutedEventArgs e) => Close();

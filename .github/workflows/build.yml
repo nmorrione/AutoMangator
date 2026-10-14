@@ -38,11 +38,14 @@ jobs:
           Write-Host $out
           if ($LASTEXITCODE -ne 0 -or -not (Get-ChildItem "$env:RUNNER_TEMP\cbz\*.cbz")) { exit 1 }
 
-      - name: Prova la creazione degli EPUB per Kobo
+      - name: Prova la creazione degli EPUB (standard e per Kobo)
         run: |
           $out = & .\publish-portable\AutoMangator.exe --epub "$env:RUNNER_TEMP\cbz" "Serie di prova" "Autore di prova" | Out-String
           Write-Host $out
-          if ($LASTEXITCODE -ne 0 -or -not (Get-ChildItem "$env:RUNNER_TEMP\cbz\Kobo\*.kepub.epub")) { exit 1 }
+          if ($LASTEXITCODE -ne 0 -or -not (Get-ChildItem "$env:RUNNER_TEMP\cbz\EPUB\*.epub" -Exclude *.kepub.epub)) { exit 1 }
+          $out = & .\publish-portable\AutoMangator.exe --epub "$env:RUNNER_TEMP\cbz" "Serie di prova" "Autore di prova" --kobo | Out-String
+          Write-Host $out
+          if ($LASTEXITCODE -ne 0 -or -not (Get-ChildItem "$env:RUNNER_TEMP\cbz\EPUB\*.kepub.epub")) { exit 1 }
 
       - run: Move-Item publish-portable\AutoMangator.exe AutoMangator-Windows-x64.exe
       - uses: actions/upload-artifact@v4
@@ -92,10 +95,12 @@ jobs:
           AutoMangator.app/Contents/MacOS/AutoMangator --cli "$TEST_URL" "$RUNNER_TEMP/cbz"
           ls "$RUNNER_TEMP"/cbz/*.cbz
 
-      - name: Prova la creazione degli EPUB per Kobo
+      - name: Prova la creazione degli EPUB (standard e per Kobo)
         run: |
           AutoMangator.app/Contents/MacOS/AutoMangator --epub "$RUNNER_TEMP/cbz" "Serie di prova" "Autore di prova"
-          ls "$RUNNER_TEMP"/cbz/Kobo/*.kepub.epub
+          ls "$RUNNER_TEMP"/cbz/EPUB/*.epub | grep -v kepub
+          AutoMangator.app/Contents/MacOS/AutoMangator --epub "$RUNNER_TEMP/cbz" "Serie di prova" "Autore di prova" --kobo
+          ls "$RUNNER_TEMP"/cbz/EPUB/*.kepub.epub
 
       - name: Comprimi
         run: ditto -c -k --keepParent AutoMangator.app AutoMangator-macOS-AppleSilicon.zip
