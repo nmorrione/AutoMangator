@@ -13,7 +13,19 @@ per pilotare il browser: Microsoft Edge su Windows, WebKit (scaricato al primo a
 | `MainWindow.axaml(.cs)` | Finestra principale |
 | `ConvertWindow.axaml(.cs)` | Finestra "Converti CBZ in EPUB" per una cartella di `.cbz` |
 | `SeriesInfoPanel.axaml(.cs)` | Campi della serie, condivisi dalle due finestre |
-| `Assets/` | Icona: `icon.svg` è la sorgente, il resto si rigenera con `make-icons.cs` |
+| `Loc.cs` | Traduzioni: carica `Strings/<lingua>.json`, `{local:Tr Chiave}` nello XAML e `Loc.T("Chiave")` nel codice |
+| `Strings/*.json` | Testi dell'interfaccia in italiano, inglese e spagnolo |
+| `Assets/` | Icona e bandierine: `icon.svg` e `flags/*.svg` sono le sorgenti, i PNG si rigenerano con `make-icons.cs` |
+
+## Traduzioni
+I testi stanno in `Strings/it.json`, `en.json` ed `es.json` (chiave → testo, con segnaposto `{0}`, `{1}`...),
+inclusi nell'exe. Non si usano i `.resx` perché creano una cartella per lingua, che dentro l'app macOS
+romperebbe la firma del bundle. All'avvio si usa la lingua del sistema se disponibile, altrimenti l'inglese.
+
+Per aggiungere una lingua:
+1. copia `Strings/en.json` in `Strings/<codice>.json` (es. `fr.json`) e traduci i testi, lasciando uguali chiavi e segnaposto;
+2. aggiungi la lingua a `Loc.Languages` in `Loc.cs`;
+3. aggiungi la bandierina `Assets/flags/<codice>.svg`, rigenera i PNG con `make-icons.cs` e aggiungi il pulsante in `MainWindow.axaml`.
 
 ## Compilare
 Serve il .NET 10 SDK.

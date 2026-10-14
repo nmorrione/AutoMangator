@@ -4,7 +4,12 @@ namespace AutoMangator;
 
 public partial class SeriesInfoPanel : UserControl
 {
-    public SeriesInfoPanel() => InitializeComponent();
+    public SeriesInfoPanel()
+    {
+        InitializeComponent();
+        // Lingua del libro: di partenza quella dell'interfaccia
+        txtLanguage.Text = Loc.Instance.Language;
+    }
 
     public string Series
     {

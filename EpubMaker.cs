@@ -149,9 +149,15 @@ public static partial class EpubMaker
             path, chapterToc: true);
     }
 
-    /// <summary>Voce dell'indice di un capitolo: "Capitolo 012 - Titolo".</summary>
-    public static string ChapterLabel(ChapterInfo ch) =>
-        string.IsNullOrWhiteSpace(ch.Title) ? $"Capitolo {PadNumber(ch.Number)}" : $"Capitolo {PadNumber(ch.Number)} - {ch.Title.Trim()}";
+    /// <summary>
+    /// Voce dell'indice di un capitolo: "Capitolo 012 - Titolo", nella lingua del libro
+    /// (non dell'interfaccia: l'indice fa parte del contenuto).
+    /// </summary>
+    public static string ChapterLabel(ChapterInfo ch, string language)
+    {
+        string label = Loc.In(language.Trim().ToLowerInvariant(), "Common.ChapterN", PadNumber(ch.Number));
+        return string.IsNullOrWhiteSpace(ch.Title) ? label : $"{label} - {ch.Title.Trim()}";
+    }
 
     private sealed record Page(string Id, string Extension, string MediaType, int Width, int Height);
 
@@ -175,8 +181,8 @@ public static partial class EpubMaker
                     // Le immagini vengono scritte subito: anche un volume molto grande non sta tutto in memoria
                     WritePages(zip, ch.CbzPath, pages);
                     if (pages.Count == before)
-                        throw new InvalidOperationException($"Nessuna immagine in {ch.FileName}.");
-                    toc.Add((chapterToc ? ChapterLabel(ch) : title, pages[before].Id));
+                        throw new InvalidOperationException(Loc.T("Epub.NoImages", ch.FileName));
+                    toc.Add((chapterToc ? ChapterLabel(ch, book.Language) : title, pages[before].Id));
                 }
                 Add(zip, "OEBPS/content.opf", Opf(book, title, index, id, pages));
                 Add(zip, "OEBPS/nav.xhtml", Nav(title, toc));

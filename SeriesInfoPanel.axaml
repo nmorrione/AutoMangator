@@ -1,35 +1,36 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:AutoMangator"
              x:Class="AutoMangator.SeriesInfoPanel">
   <!-- Dati della serie per gli EPUB: usato nella finestra principale e in "Converti CBZ in EPUB" -->
   <StackPanel Spacing="6">
     <Grid ColumnDefinitions="Auto,*,16,Auto,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="6" ColumnSpacing="8">
-      <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="Serie *" FontWeight="SemiBold" />
+      <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="{local:Tr Series.Series}" FontWeight="SemiBold" />
       <TextBox   Grid.Row="0" Grid.Column="1" x:Name="txtSeries" />
-      <TextBlock Grid.Row="0" Grid.Column="3" VerticalAlignment="Center" Text="Lingua" />
-      <TextBox   Grid.Row="0" Grid.Column="4" x:Name="txtLanguage" Text="it" PlaceholderText="it, en, ja..." />
+      <TextBlock Grid.Row="0" Grid.Column="3" VerticalAlignment="Center" Text="{local:Tr Series.Language}" />
+      <TextBox   Grid.Row="0" Grid.Column="4" x:Name="txtLanguage" PlaceholderText="it, en, es, ja..."
+                 ToolTip.Tip="{local:Tr Series.LanguageTip}" />
 
-      <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Text="Autore (testi)" />
+      <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Text="{local:Tr Series.Writer}" />
       <TextBox   Grid.Row="1" Grid.Column="1" x:Name="txtWriter" />
-      <TextBlock Grid.Row="1" Grid.Column="3" VerticalAlignment="Center" Text="Disegnatore" />
-      <TextBox   Grid.Row="1" Grid.Column="4" x:Name="txtArtist" PlaceholderText="se diverso dall'autore" />
+      <TextBlock Grid.Row="1" Grid.Column="3" VerticalAlignment="Center" Text="{local:Tr Series.Artist}" />
+      <TextBox   Grid.Row="1" Grid.Column="4" x:Name="txtArtist" PlaceholderText="{local:Tr Series.ArtistHint}" />
 
-      <TextBlock Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Text="Editore" />
+      <TextBlock Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Text="{local:Tr Series.Publisher}" />
       <TextBox   Grid.Row="2" Grid.Column="1" x:Name="txtPublisher" />
-      <TextBlock Grid.Row="2" Grid.Column="3" VerticalAlignment="Center" Text="Anno" />
+      <TextBlock Grid.Row="2" Grid.Column="3" VerticalAlignment="Center" Text="{local:Tr Series.Year}" />
       <TextBox   Grid.Row="2" Grid.Column="4" x:Name="txtYear" />
 
-      <TextBlock Grid.Row="3" Grid.Column="0" VerticalAlignment="Center" Text="Genere" />
-      <TextBox   Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="4" x:Name="txtGenre" PlaceholderText="separati da virgola, es. Avventura, Fantasy" />
+      <TextBlock Grid.Row="3" Grid.Column="0" VerticalAlignment="Center" Text="{local:Tr Series.Genre}" />
+      <TextBox   Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="4" x:Name="txtGenre" PlaceholderText="{local:Tr Series.GenreHint}" />
 
-      <TextBlock Grid.Row="4" Grid.Column="0" VerticalAlignment="Top" Margin="0,6,0,0" Text="Trama" />
+      <TextBlock Grid.Row="4" Grid.Column="0" VerticalAlignment="Top" Margin="0,6,0,0" Text="{local:Tr Series.Summary}" />
       <TextBox   Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="4" x:Name="txtSummary" Height="70"
                  AcceptsReturn="True" TextWrapping="Wrap" />
     </Grid>
     <WrapPanel Orientation="Horizontal" ItemSpacing="24">
-      <CheckBox x:Name="chkRtl" Content="Manga: lettura da destra a sinistra" />
-      <CheckBox x:Name="chkKobo" Content="Ottimizzato per Kobo (.kepub.epub)"
-                ToolTip.Tip="Spuntalo se leggi su un Kobo. Stesso EPUB, ma con estensione .kepub.epub: il Kobo lo apre col suo lettore, che mostra meglio le pagine dei fumetti. Gli altri ebook reader non lo riconoscono." />
+      <CheckBox x:Name="chkRtl" Content="{local:Tr Series.Rtl}" />
+      <CheckBox x:Name="chkKobo" Content="{local:Tr Series.Kobo}" ToolTip.Tip="{local:Tr Series.KoboTip}" />
     </WrapPanel>
   </StackPanel>
 </UserControl>

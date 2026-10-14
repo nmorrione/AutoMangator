@@ -6,6 +6,7 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Platform.Storage;
+using static AutoMangator.Loc;
 
 namespace AutoMangator;
 
@@ -21,6 +22,23 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         txtFolder.Text = Program.DefaultOutputFolder;
+        // I testi impostati da codice vanno aggiornati a mano quando cambia la lingua
+        Instance.LanguageChanged += OnLanguageChanged;
+        OnLanguageChanged();
+    }
+
+    private void OnLanguageChanged()
+    {
+        UpdateStartLabel();
+        foreach (var btn in new[] { btnLangIt, btnLangEn, btnLangEs })
+            btn.Classes.Set("selected", (string?)btn.Tag == Instance.Language);
+    }
+
+    private void btnLanguage_Click(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: string code }) Instance.SetLanguage(code);
+        // Testi più lunghi o più corti: la finestra si adatta
+        FitHeight();
     }
 
     private async void btnBrowse_Click(object? sender, RoutedEventArgs e)
@@ -28,7 +46,7 @@ public partial class MainWindow : Window
         var start = Directory.Exists(txtFolder.Text) ? await StorageProvider.TryGetFolderFromPathAsync(txtFolder.Text) : null;
         var folders = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
         {
-            Title = "Cartella dove salvare i file .cbz",
+            Title = T("Main.FolderPicker"),
             SuggestedStartLocation = start,
         });
         if (folders is [var folder] && folder.TryGetLocalPath() is { } path)
@@ -114,9 +132,9 @@ public partial class MainWindow : Window
         }
     }
 
-    // "Crea CBZ", "Crea EPUB", "Crea volume CBZ", "Crea volume EPUB"
+    // "Crea CBZ", "Crea EPUB", "Crea volume CBZ", "Crea volume EPUB" (nella lingua scelta)
     private void UpdateStartLabel() =>
-        btnStart.Content = (chkVolume.IsChecked == true ? "Crea volume " : "Crea ") + (chkEpub.IsChecked == true ? "EPUB" : "CBZ");
+        btnStart.Content = T(chkVolume.IsChecked == true ? "Main.StartVolume" : "Main.Start", chkEpub.IsChecked == true ? "EPUB" : "CBZ");
 
     // ---------- Lista capitoli ----------
 
@@ -125,12 +143,12 @@ public partial class MainWindow : Window
         string listUrl = (txtListUrl.Text ?? "").Trim();
         if (!Uri.TryCreate(listUrl, UriKind.Absolute, out var uri) || (uri.Scheme != "http" && uri.Scheme != "https"))
         {
-            Log("Incolla prima l'indirizzo della pagina con la lista dei capitoli.");
+            Log(T("Log.ListMissing"));
             return;
         }
         if (!TryParseOptional(txtFrom.Text, out double? from) || !TryParseOptional(txtTo.Text, out double? to))
         {
-            Log("\"dal\" e \"al\" devono essere numeri di capitolo (o vuoti).");
+            Log(T("Log.RangeInvalid", T("Main.From"), T("Main.To")));
             return;
         }
 
@@ -143,37 +161,36 @@ public partial class MainWindow : Window
             var all = await maker.FindChaptersAsync(listUrl, log, _cts.Token);
             if (all.Count == 0)
             {
-                Log("Nessun capitolo riconosciuto in questa pagina: incolla gli indirizzi dei capitoli a mano.");
+                Log(T("Log.ListNone"));
                 return;
             }
 
             var chosen = all.Where(c => (from is null || c.Number >= from) && (to is null || c.Number <= to)).ToList();
-            Log($"Trovati {all.Count} capitoli nella lista (dal {Format(all[0].Number)} al {Format(all[^1].Number)}).");
+            Log(T("Log.ListFound", all.Count, Format(all[0].Number), Format(all[^1].Number)));
             if (chosen.Count == 0)
             {
-                Log("Nessun capitolo nell'intervallo scelto: controlla \"dal\" e \"al\".");
+                Log(T("Log.ListNoneInRange", T("Main.From"), T("Main.To")));
                 return;
             }
 
             _found = chosen.ToDictionary(c => c.Url);
             txtUrls.Text = string.Join(Environment.NewLine, chosen.Select(c => c.Url));
-            Log($"Inseriti in \"Indirizzi\" {chosen.Count} capitoli (dal {Format(chosen[0].Number)} al {Format(chosen[^1].Number)}): " +
-                $"controllali e poi premi \"{btnStart.Content}\".");
+            Log(T("Log.ListInserted", chosen.Count, Format(chosen[0].Number), Format(chosen[^1].Number), btnStart.Content));
             Log("");
         }
         catch (SecurityCheckException ex)
         {
             Log($"⚠ {ex.Message}");
             chkShow.IsChecked = true;
-            Log("⚠ Ho già spuntato \"Mostra il browser\": premi di nuovo \"Trova capitoli\" per riprovare.");
+            Log("⚠ " + T("Log.AntiBotRetry", T("Main.ShowBrowserShort"), T("Main.Find")));
         }
         catch (OperationCanceledException)
         {
-            Log("Operazione annullata.");
+            Log(T("Log.Cancelled"));
         }
         catch (Exception ex)
         {
-            Log($"ERRORE: {ex.Message}");
+            Log(T("Log.Error", ex.Message));
         }
         finally
         {
@@ -191,7 +208,7 @@ public partial class MainWindow : Window
         var invalid = urls.FirstOrDefault(u => !Uri.TryCreate(u, UriKind.Absolute, out var uri) || (uri.Scheme != "http" && uri.Scheme != "https"));
         if (urls.Count == 0 || invalid is not null)
         {
-            Log(invalid is null ? "Inserisci almeno un indirizzo." : $"Indirizzo non valido: {invalid}");
+            Log(invalid is null ? T("Log.NoUrls") : T("Log.InvalidUrl", invalid));
             return;
         }
 
@@ -211,10 +228,10 @@ public partial class MainWindow : Window
         if (chkEpub.IsChecked == true)
         {
             job.Book = series.Read();
-            if (job.Book.Series.Length == 0) { Log("Per creare gli EPUB serve il nome della serie."); return; }
+            if (job.Book.Series.Length == 0) { Log(T("Log.SeriesRequired")); return; }
             if (!TryParseOptional(txtChapter.Text, out job.FirstChapter))
             {
-                Log($"Numero capitolo non valido: {txtChapter.Text}");
+                Log(T("Log.ChapterInvalid", txtChapter.Text));
                 return;
             }
         }
@@ -233,16 +250,16 @@ public partial class MainWindow : Window
             {
                 // Basta premere di nuovo il pulsante: il browser visibile è già selezionato
                 chkShow.IsChecked = true;
-                Log($"⚠ Ho già spuntato \"Mostra il browser\": premi di nuovo \"{btnStart.Content}\" per riprovare.");
+                Log("⚠ " + T("Log.AntiBotRetry", T("Main.ShowBrowserShort"), btnStart.Content));
             }
         }
         catch (OperationCanceledException)
         {
-            Log("Operazione annullata.");
+            Log(T("Log.Cancelled"));
         }
         catch (Exception ex)
         {
-            Log($"ERRORE: {ex.Message}");
+            Log(T("Log.Error", ex.Message));
         }
         finally
         {
@@ -281,15 +298,15 @@ public partial class MainWindow : Window
                 _lastFile = await maker.CreateAsync(job.Urls[i], job.Folder, name, job.MinSide, log, ct, job.ForceReader);
                 if (job.Book is not { } book)
                 {
-                    Log($"Creato {_lastFile}");
+                    Log(T("Log.Created", _lastFile));
                 }
                 else
                 {
                     var chapter = Chapter(job, i, _lastFile);
                     string cbz = _lastFile;
                     _lastFile = await Task.Run(() => EpubMaker.Create(book, chapter, job.Folder));
-                    Log($"Capitolo {chapter.Number}: creato {_lastFile}");
-                    if (job.KeepCbz) Log($"Conservato {cbz}");
+                    Log(T("Log.ChapterCreated", chapter.Number, _lastFile));
+                    if (job.KeepCbz) Log(T("Log.Kept", cbz));
                     else File.Delete(cbz);
                 }
                 ok++;
@@ -301,11 +318,11 @@ public partial class MainWindow : Window
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
-                Log($"ERRORE: {ex.Message}");
+                Log(T("Log.Error", ex.Message));
             }
             Log("");
         }
-        Log($"Fatto: {ok} di {job.Urls.Count} file creati.");
+        Log(T("Log.Done", ok, job.Urls.Count));
         return antiBot;
     }
 
@@ -320,7 +337,7 @@ public partial class MainWindow : Window
         {
             for (int i = 0; i < job.Urls.Count; i++)
             {
-                Log($"Capitolo {i + 1} di {job.Urls.Count}");
+                Log(T("Log.ChapterOf", i + 1, job.Urls.Count));
                 try
                 {
                     string cbz = await maker.CreateAsync(job.Urls[i], temp, null, job.MinSide, log, ct, job.ForceReader);
@@ -328,56 +345,53 @@ public partial class MainWindow : Window
                 }
                 catch (Exception ex) when (ex is not OperationCanceledException)
                 {
-                    Log(ex is SecurityCheckException ? $"⚠ {ex.Message}" : $"ERRORE: {ex.Message}");
+                    Log(ex is SecurityCheckException ? $"⚠ {ex.Message}" : T("Log.Error", ex.Message));
                     antiBot |= ex is SecurityCheckException;
-                    failed.Add(_found.TryGetValue(job.Urls[i], out var f) ? $"Capitolo {Format(f.Number)}" : job.Urls[i]);
+                    failed.Add(_found.TryGetValue(job.Urls[i], out var f) ? T("Common.ChapterN", Format(f.Number)) : job.Urls[i]);
                 }
                 Log("");
             }
 
             if (chapters.Count == 0)
             {
-                Log("Nessun capitolo scaricato: volume non creato.");
+                Log(T("Log.VolumeNoChapters"));
                 return antiBot;
             }
             if (failed.Count > 0)
             {
-                string list = string.Join("\n", failed.Take(10).Select(f => "• " + f)) + (failed.Count > 10 ? $"\n• ... e altri {failed.Count - 10}" : "");
-                string missing = failed.Count == 1
-                    ? $"1 capitolo su {job.Urls.Count} non è stato scaricato"
-                    : $"{failed.Count} capitoli su {job.Urls.Count} non sono stati scaricati";
-                string others = chapters.Count == 1 ? "l'unico capitolo scaricato" : $"gli altri {chapters.Count} capitoli";
-                bool go = await ConfirmAsync("Capitoli non scaricati",
-                    $"{missing}:\n\n{list}\n\nVuoi creare comunque il volume con {others}?",
-                    "Crea comunque", "Annulla");
+                string list = string.Join("\n", failed.Take(10).Select(f => "• " + f)) + (failed.Count > 10 ? "\n• " + T("Volume.AndOthers", failed.Count - 10) : "");
+                string missing = failed.Count == 1 ? T("Volume.MissingOne", job.Urls.Count) : T("Volume.MissingMany", failed.Count, job.Urls.Count);
+                string others = chapters.Count == 1 ? T("Volume.OthersOne") : T("Volume.OthersMany", chapters.Count);
+                bool go = await ConfirmAsync(T("Volume.FailedTitle"), T("Volume.FailedQuestion", missing, list, others),
+                    T("Volume.CreateAnyway"), T("Common.Cancel"));
                 if (!go)
                 {
-                    Log("Volume non creato.");
+                    Log(T("Log.VolumeNotCreated"));
                     return antiBot;
                 }
-                Log($"Creo il volume senza: {string.Join(", ", failed)}.");
+                Log(T("Log.VolumeWithout", string.Join(", ", failed)));
             }
 
-            Log($"Unisco {chapters.Count} capitoli in un volume...");
+            Log(T("Log.Merging", chapters.Count));
             if (job.Book is { } book)
             {
                 _lastFile = await Task.Run(() => EpubMaker.CreateVolume(book, chapters, job.VolumeNumber, job.Folder, job.BaseName));
-                Log($"Volume creato: {_lastFile}");
+                Log(T("Log.VolumeCreated", _lastFile));
                 if (job.KeepCbz)
                 {
                     // Stesso nome del volume EPUB, senza estensione (.epub o .kepub.epub)
                     string name = Path.GetFileName(_lastFile)[..^book.Extension.Length];
-                    Log($"Conservato {await Task.Run(() => CbzMaker.MergeCbz(chapters.Select(c => c.CbzPath), job.Folder, name))}");
+                    Log(T("Log.Kept", await Task.Run(() => CbzMaker.MergeCbz(chapters.Select(c => c.CbzPath), job.Folder, name))));
                 }
             }
             else
             {
-                string name = job.BaseName ?? $"{SeriesFromTitle(Path.GetFileNameWithoutExtension(chapters[0].CbzPath))} - Capitoli " +
-                    $"{EpubMaker.PadNumber(chapters[0].Number)}-{EpubMaker.PadNumber(chapters[^1].Number)}";
+                string name = job.BaseName ?? T("Volume.CbzName", SeriesFromTitle(Path.GetFileNameWithoutExtension(chapters[0].CbzPath)),
+                    EpubMaker.PadNumber(chapters[0].Number), EpubMaker.PadNumber(chapters[^1].Number));
                 _lastFile = await Task.Run(() => CbzMaker.MergeCbz(chapters.Select(c => c.CbzPath), job.Folder, name));
-                Log($"Volume creato: {_lastFile}");
+                Log(T("Log.VolumeCreated", _lastFile));
             }
-            Log($"Fatto: volume con {chapters.Count} capitoli.");
+            Log(T("Log.VolumeDone", chapters.Count));
             return antiBot;
         }
         finally
@@ -402,7 +416,7 @@ public partial class MainWindow : Window
     // "Dan Da Dan Capitolo 067 ITA" -> "Dan Da Dan"
     private static string SeriesFromTitle(string title)
     {
-        var m = Regex.Match(title, @"^(.*?)\s*(?:[-–|:]\s*)?(?:capitolo|cap\.?|chapter|ch\.?|episodio|ep\.?)?\s*\d", RegexOptions.IgnoreCase);
+        var m = Regex.Match(title, @"^(.*?)\s*(?:[-–|:]\s*)?(?:capitolo|capítulo|capitulo|cap\.?|chapter|ch\.?|episodio|ep\.?)?\s*\d", RegexOptions.IgnoreCase);
         return m.Success && m.Groups[1].Value.Trim().Length > 0 ? m.Groups[1].Value.Trim() : title;
     }
 
@@ -470,6 +484,7 @@ public partial class MainWindow : Window
     protected override void OnClosing(WindowClosingEventArgs e)
     {
         _cts?.Cancel();
+        Instance.LanguageChanged -= OnLanguageChanged;
         base.OnClosing(e);
     }
 }

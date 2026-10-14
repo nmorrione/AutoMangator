@@ -17,6 +17,9 @@
     <!-- icon.svg è la sorgente; icon.ico (exe Windows), AppIcon.icns (app macOS) e icon.png
          (finestra) si rigenerano con Assets\make-icons.cs, uno script a sé che non fa parte dell'app -->
     <AvaloniaResource Include="Assets\icon.png" />
+    <AvaloniaResource Include="Assets\flags\*.png" />
+    <!-- Traduzioni dell'interfaccia (vedi Loc.cs) -->
+    <EmbeddedResource Include="Strings\*.json" LogicalName="AutoMangator.Strings.%(Filename).json" />
     <Compile Remove="Assets\make-icons.cs" />
   </ItemGroup>
 

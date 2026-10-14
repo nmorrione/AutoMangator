@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.IO.Compression;
 using Microsoft.Playwright;
+using static AutoMangator.Loc;
 
 namespace AutoMangator;
 
@@ -50,13 +51,13 @@ public sealed partial class CbzMaker : IAsyncDisposable
             : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".cache", "ms-playwright");
         bool present = Directory.Exists(cache) && Directory.EnumerateDirectories(cache, "webkit-*").Any();
         if (!present)
-            log.Report("Scarico WebKit (solo al primo avvio, può richiedere qualche minuto)...");
+            log.Report(T("Engine.WebKitDownload"));
 
         int exitCode = await Task.Run(() => Microsoft.Playwright.Program.Main(["install", "webkit"]));
         if (exitCode != 0)
-            throw new InvalidOperationException($"Installazione di WebKit non riuscita (codice {exitCode}).");
+            throw new InvalidOperationException(T("Engine.WebKitFailed", exitCode));
         if (!present)
-            log.Report("WebKit pronto.");
+            log.Report(T("Engine.WebKitReady"));
     }
 
     /// <summary>Crea il .cbz e restituisce il percorso del file creato.</summary>
@@ -88,12 +89,12 @@ public sealed partial class CbzMaker : IAsyncDisposable
         page.Response += (_, r) => { if (r.Request.ResourceType == "image") responses[r.Url] = r; };
         var guard = await ProtectAsync(context, page, url);
 
-        log.Report($"Apro {url} ...");
+        log.Report(T("Engine.Opening", url));
         await page.GotoAsync(url, new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
         await WaitForSecurityCheckAsync(page, headless, log, ct);
         guard.SiteLoaded(page.Url);
 
-        log.Report("Scorro la pagina per caricare tutte le immagini...");
+        log.Report(T("Engine.Scrolling"));
         await page.EvaluateAsync(ScrollToBottomJs);
         try { await page.WaitForLoadStateAsync(LoadState.NetworkIdle, new() { Timeout = 30_000 }); } catch (TimeoutException) { }
         ct.ThrowIfCancellationRequested();
@@ -117,14 +118,14 @@ public sealed partial class CbzMaker : IAsyncDisposable
         }
 
         if (srcs.Length == 0)
-            throw new InvalidOperationException("Nessuna immagine trovata (prova un lato minimo più basso o mostra il browser).");
+            throw new InvalidOperationException(T("Engine.NoImages"));
         // Una sola immagine orizzontale: di solito è l'avviso "capitolo non disponibile" del sito, non una pagina
         if (srcs.Length == 1 && await page.EvaluateAsync<bool>(@"src => {
                 const i = [...document.images].find(x => (x.currentSrc || x.src) === src);
                 return !!i && i.naturalWidth > i.naturalHeight;
             }", srcs[0]))
-            throw new InvalidOperationException("Trovata una sola immagine orizzontale: probabilmente il capitolo non è (ancora) disponibile.");
-        log.Report($"Trovate {srcs.Length} immagini.");
+            throw new InvalidOperationException(T("Engine.NotAvailable"));
+        log.Report(T("Engine.Found", srcs.Length));
 
         if (string.IsNullOrWhiteSpace(fileName))
         {
@@ -146,14 +147,14 @@ public sealed partial class CbzMaker : IAsyncDisposable
                     ct.ThrowIfCancellationRequested();
                     byte[]? data = await GetBytesAsync(src, responses, context, page.Url);
                     string? ext = data is null ? null : Extension(data);
-                    if (data is null || ext is null) { log.Report($"  saltata: {src}"); continue; }
+                    if (data is null || ext is null) { log.Report("  " + T("Engine.Skipped", src)); continue; }
 
                     var entry = zip.CreateEntry($"{++n:D3}{ext}", CompressionLevel.NoCompression);
                     using var s = entry.Open();
                     s.Write(data);
                     log.Report($"  {n:D3}  {data.Length / 1024,6} KB");
                 }
-                if (n == 0) throw new InvalidOperationException("Nessuna immagine valida scaricata.");
+                if (n == 0) throw new InvalidOperationException(T("Engine.NoValidImages"));
             }
             File.Move(tmpPath, outPath);
         }

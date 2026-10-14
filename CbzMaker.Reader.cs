@@ -1,11 +1,11 @@
 using Microsoft.Playwright;
+using static AutoMangator.Loc;
 
 namespace AutoMangator;
 
 /// <summary>Il sito ha mostrato una verifica anti-bot al browser nascosto: va ripetuto col browser visibile.</summary>
 public sealed class SecurityCheckException(string url) : InvalidOperationException(
-    $"Protezione anti-bot trovata su {new Uri(url).Host}: spunta \"Mostra il browser\" e riprova. " +
-    "Se nella finestra compare una verifica, completala tu e il download proseguirà da solo.");
+    T("Engine.AntiBot", new Uri(url).Host, T("Main.ShowBrowserShort")));
 
 // Reader a una pagina per volta: invece di mostrare tutto il capitolo, alcuni siti mostrano
 // un'immagine alla volta. Qui si "sfoglia" il reader come farebbe una persona, raccogliendo
@@ -84,7 +84,7 @@ public sealed partial class CbzMaker
     // Pagine di verifica anti-bot (Cloudflare e simili) mostrate al posto del sito
     private const string SecurityCheckJs = @"() => {
         const text = (document.title + ' ' + (document.body ? document.body.innerText.slice(0, 2000) : '')).toLowerCase();
-        return /just a moment|ci siamo quasi|verifica di sicurezza|checking your browser|verify you are human|attention required/.test(text)
+        return /just a moment|ci siamo quasi|verifica di sicurezza|checking your browser|verify you are human|attention required|un momento…|verificación de seguridad|verifica que eres un ser humano/.test(text)
             || !!document.querySelector('#challenge-form, #challenge-running, iframe[src*=""challenges.cloudflare.com""]');
     }";
 
@@ -98,16 +98,16 @@ public sealed partial class CbzMaker
         if (headless)
             throw new SecurityCheckException(page.Url);
 
-        log.Report("Il sito chiede una verifica di sicurezza: completala nella finestra del browser (attendo fino a 3 minuti)...");
+        log.Report(T("Engine.CheckWaiting"));
         var deadline = DateTime.UtcNow.AddMinutes(3);
         while (await IsSecurityCheckAsync(page))
         {
             if (DateTime.UtcNow > deadline)
-                throw new InvalidOperationException("Verifica di sicurezza non completata entro 3 minuti.");
+                throw new InvalidOperationException(T("Engine.CheckTimeout"));
             await Task.Delay(1000, ct);
         }
         try { await page.WaitForLoadStateAsync(LoadState.Load, new() { Timeout = 60_000 }); } catch (TimeoutException) { }
-        log.Report("Verifica superata, proseguo.");
+        log.Report(T("Engine.CheckPassed"));
     }
 
     private static async Task<bool> IsSecurityCheckAsync(IPage page)
@@ -181,7 +181,7 @@ public sealed partial class CbzMaker
         double minArea = main.Area * 0.4;
 
         guard.LockChapter(page.Url);
-        log.Report(forced ? "Sfoglio il reader pagina per pagina..." : "Controllo se è un reader a pagine...");
+        log.Report(T(forced ? "Engine.ReaderForced" : "Engine.ReaderProbe"));
 
         var pages = new List<string> { first };
         // Il clic sull'immagine solo se forzato: su pagine normali può aprire visualizzatori o gallerie
@@ -204,26 +204,26 @@ public sealed partial class CbzMaker
             // Fine: l'immagine non cambia più, oppure si ripresenta una pagina già vista
             if (next is null)
             {
-                if (pages.Count > 1) log.Report("Fine del capitolo: la pagina non cambia più.");
+                if (pages.Count > 1) log.Report(T("Engine.ReaderEnd"));
                 break;
             }
             if (pages.Contains(next))
             {
-                log.Report($"Fine del capitolo: il reader è tornato a una pagina già vista ({ShortName(next)}).");
+                log.Report(T("Engine.ReaderLoop", ShortName(next)));
                 break;
             }
 
             pages.Add(next);
-            if (pages.Count == 2) log.Report($"Reader rilevato: sfoglio le pagine...\n  pagina 1: {ShortName(pages[0])}");
-            log.Report($"  pagina {pages.Count}: {ShortName(next)}");
+            if (pages.Count == 2) log.Report(T("Engine.ReaderDetected") + "\n  " + T("Engine.ReaderPage", 1, ShortName(pages[0])));
+            log.Report("  " + T("Engine.ReaderPage", pages.Count, ShortName(next)));
         }
 
         if (guard.Blocked > 0)
-            log.Report($"Bloccate {guard.Blocked} aperture di pubblicità o di altre pagine.");
+            log.Report(T("Engine.Blocked", guard.Blocked));
         if (pages.Count == 1)
         {
             if (!forced) return null;
-            log.Report("Non riesco a girare pagina in questo reader.");
+            log.Report(T("Engine.ReaderStuck"));
         }
         return [.. pages];
     }

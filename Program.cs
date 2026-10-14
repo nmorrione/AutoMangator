@@ -21,7 +21,10 @@ internal static class Program
         if (args is ["--epub", var folder, var series, ..])
         {
             var rest = args.Skip(3).Where(a => a != "--kobo").ToArray();
-            return RunEpubCli(folder, new BookInfo { Series = series, Writer = rest.Length > 0 ? rest[0] : "", Kobo = args.Contains("--kobo") });
+            return RunEpubCli(folder, new BookInfo
+            {
+                Series = series, Writer = rest.Length > 0 ? rest[0] : "", Kobo = args.Contains("--kobo"), Language = Loc.Instance.Language,
+            });
         }
 
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
@@ -41,12 +44,12 @@ internal static class Program
         {
             await using var maker = await CbzMaker.StartAsync(showBrowser, log);
             string file = await maker.CreateAsync(url, folder, null, 300, log, CancellationToken.None, forceReader);
-            Console.WriteLine($"Creato {file}");
+            Console.WriteLine(Loc.T("Log.Created", file));
             return 0;
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"ERRORE: {ex}");
+            Console.Error.WriteLine(Loc.T("Log.Error", ex));
             return 1;
         }
     }
@@ -56,18 +59,18 @@ internal static class Program
         var chapters = EpubMaker.LoadChapters(folder);
         if (chapters.Count == 0)
         {
-            Console.Error.WriteLine("ERRORE: nessun file .cbz nella cartella.");
+            Console.Error.WriteLine(Loc.T("Log.Error", Loc.T("Convert.NoCbz")));
             return 1;
         }
         try
         {
             foreach (var ch in chapters)
-                Console.WriteLine($"Creato {EpubMaker.Create(book, ch, Path.Combine(folder, EpubMaker.OutputFolderName))}");
+                Console.WriteLine(Loc.T("Log.Created", EpubMaker.Create(book, ch, Path.Combine(folder, EpubMaker.OutputFolderName))));
             return 0;
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"ERRORE: {ex}");
+            Console.Error.WriteLine(Loc.T("Log.Error", ex));
             return 1;
         }
     }

@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using static AutoMangator.Loc;
 
 namespace AutoMangator;
 
@@ -24,7 +25,7 @@ public partial class ConvertWindow : Window
         var start = Directory.Exists(txtFolder.Text) ? await StorageProvider.TryGetFolderFromPathAsync(txtFolder.Text) : null;
         var folders = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
         {
-            Title = "Cartella con i file .cbz dei capitoli",
+            Title = T("Convert.FolderPicker"),
             SuggestedStartLocation = start,
         });
         if (folders is [var f] && f.TryGetLocalPath() is { } path)
@@ -42,22 +43,22 @@ public partial class ConvertWindow : Window
         if (EpubMaker.TryReadExisting(folder) is { } info)
         {
             series.Fill(info);
-            Log("Dati della serie ripresi dagli EPUB già creati in questa cartella.");
+            Log(T("Convert.Restored"));
         }
         else if (series.Series.Length == 0)
         {
             series.Series = Path.GetFileName(folder.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
         }
-        Log(_chapters.Count == 0 ? "Nessun file .cbz in questa cartella." : $"Trovati {_chapters.Count} capitoli.");
+        Log(_chapters.Count == 0 ? T("Convert.NoCbz") : T("Convert.Found", _chapters.Count));
     }
 
     private async void btnCreate_Click(object? sender, RoutedEventArgs e)
     {
         var book = series.Read();
-        if (_chapters.Count == 0) { Log("Scegli prima una cartella con dei file .cbz."); return; }
-        if (book.Series.Length == 0) { Log("Il nome della serie è obbligatorio."); return; }
+        if (_chapters.Count == 0) { Log(T("Convert.ChooseFolder")); return; }
+        if (book.Series.Length == 0) { Log(T("Log.SeriesRequired")); return; }
         var dup = _chapters.GroupBy(c => c.Number.Trim()).FirstOrDefault(g => g.Count() > 1);
-        if (dup is not null) { Log($"Il numero {dup.Key} è usato da più capitoli: correggilo prima di continuare."); return; }
+        if (dup is not null) { Log(T("Convert.Duplicate", dup.Key)); return; }
 
         string output = Path.Combine(txtFolder.Text!, EpubMaker.OutputFolderName);
         SetRunning(true);
@@ -76,12 +77,12 @@ public partial class ConvertWindow : Window
                 }
                 catch (Exception ex)
                 {
-                    ((IProgress<string>)log).Report($"ERRORE in {ch.FileName}: {ex.Message}");
+                    ((IProgress<string>)log).Report(T("Convert.ErrorIn", ch.FileName, ex.Message));
                 }
             }
         });
-        Log($"Fatto: {ok} di {_chapters.Count} EPUB creati in {output}");
-        if (ok > 0) Log("Copiali nell'ebook reader collegato via USB (anche in una sottocartella).");
+        Log(T("Convert.Done", ok, _chapters.Count, output));
+        if (ok > 0) Log(T("Convert.CopyHint"));
         SetRunning(false);
     }
 

@@ -2,17 +2,17 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="using:AutoMangator"
         x:Class="AutoMangator.ConvertWindow"
-        Title="Converti CBZ in EPUB"
+        Title="{local:Tr Convert.Title}"
         Icon="avares://AutoMangator/Assets/icon.png"
         Width="860" Height="820" MinWidth="680" MinHeight="640"
         WindowStartupLocation="CenterOwner">
 
   <Grid Margin="12" RowDefinitions="Auto,Auto,Auto,Auto,Auto,*,Auto,Auto" RowSpacing="4">
 
-    <TextBlock Grid.Row="0" Text="Cartella con i file CBZ:" />
+    <TextBlock Grid.Row="0" Text="{local:Tr Convert.Folder}" />
     <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="6">
       <TextBox x:Name="txtFolder" IsReadOnly="True" />
-      <Button Grid.Column="1" x:Name="btnBrowse" Content="Sfoglia..." Click="btnBrowse_Click" />
+      <Button Grid.Column="1" x:Name="btnBrowse" Content="{local:Tr Common.Browse}" Click="btnBrowse_Click" />
     </Grid>
 
     <!-- Dati comuni a tutti i capitoli -->
@@ -20,9 +20,9 @@
 
     <!-- Capitoli -->
     <Grid Grid.Row="4" Margin="0,8,0,0" ColumnDefinitions="80,*,240" ColumnSpacing="8">
-      <TextBlock Grid.Column="0" Text="Numero" FontWeight="SemiBold" />
-      <TextBlock Grid.Column="1" Text="Titolo del capitolo (facoltativo)" FontWeight="SemiBold" />
-      <TextBlock Grid.Column="2" Text="File" FontWeight="SemiBold" />
+      <TextBlock Grid.Column="0" Text="{local:Tr Convert.Number}" FontWeight="SemiBold" />
+      <TextBlock Grid.Column="1" Text="{local:Tr Convert.ChapterTitle}" FontWeight="SemiBold" />
+      <TextBlock Grid.Column="2" Text="{local:Tr Convert.File}" FontWeight="SemiBold" />
     </Grid>
     <Border Grid.Row="5" BorderThickness="1" BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}" CornerRadius="4">
       <ScrollViewer>
@@ -47,9 +47,9 @@
     <Grid Grid.Row="7" Margin="0,6,0,0" ColumnDefinitions="*,Auto">
       <ProgressBar x:Name="progress" VerticalAlignment="Center" Margin="0,0,12,0" />
       <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-        <Button x:Name="btnCreate" Content="Crea EPUB" Classes="accent" MinWidth="120" Click="btnCreate_Click" />
-        <Button x:Name="btnOpen" Content="Apri cartella" MinWidth="110" Click="btnOpen_Click" />
-        <Button x:Name="btnClose" Content="Chiudi" MinWidth="90" Click="btnClose_Click" />
+        <Button x:Name="btnCreate" Content="{local:Tr Convert.Create}" Classes="accent" MinWidth="120" Click="btnCreate_Click" />
+        <Button x:Name="btnOpen" Content="{local:Tr Common.OpenFolder}" MinWidth="110" Click="btnOpen_Click" />
+        <Button x:Name="btnClose" Content="{local:Tr Common.Close}" MinWidth="90" Click="btnClose_Click" />
       </StackPanel>
     </Grid>
   </Grid>

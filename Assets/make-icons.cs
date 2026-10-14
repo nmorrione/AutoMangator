@@ -2,8 +2,10 @@
 #:property PublishAot=false
 
 // Genera icon.ico (Windows, a tutta superficie), AppIcon.icns (macOS, griglia Apple con margine)
-// e icon.png (finestra) partendo da icon.svg, disegnando ogni dimensione dal vettoriale.
+// e icon.png (finestra) partendo da icon.svg, disegnando ogni dimensione dal vettoriale;
+// in più le bandierine delle lingue (flags/*.svg -> flags/*.png).
 // Uso (dalla cartella Assets):  dotnet run make-icons.cs -- .
+// Nota: va escluso dalla compilazione dell'app (vedi AutoMangator.csproj)
 using Microsoft.Playwright;
 
 string assets = args[0];
@@ -61,4 +63,13 @@ using (var fs = File.Create(Path.Combine(assets, "AppIcon.icns")))
 
 // PNG per l'icona della finestra
 File.WriteAllBytes(Path.Combine(assets, "icon.png"), await Render(256, false));
+
+// Bandierine per la scelta della lingua (flags/*.svg -> flags/*.png, 3:2, a risoluzione tripla)
+foreach (var flag in Directory.GetFiles(Path.Combine(assets, "flags"), "*.svg"))
+{
+    const int w = 72, h = 48;
+    await page.SetViewportSizeAsync(w, h);
+    await page.SetContentAsync($"<html><body style='margin:0'><div style='width:{w}px;height:{h}px'>{File.ReadAllText(flag)}</div><style>svg{{width:100%;height:100%;display:block}}</style></body></html>");
+    File.WriteAllBytes(Path.ChangeExtension(flag, ".png"), await page.ScreenshotAsync(new() { Clip = new() { X = 0, Y = 0, Width = w, Height = h } }));
+}
 Console.WriteLine("Icone generate.");

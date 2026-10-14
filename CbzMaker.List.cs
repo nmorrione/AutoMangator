@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
 using Microsoft.Playwright;
+using static AutoMangator.Loc;
 
 namespace AutoMangator;
 
@@ -21,7 +22,7 @@ public sealed partial class CbzMaker
         try
         {
             var guard = await ProtectAsync(context, page, listUrl);
-            log.Report($"Apro la lista {listUrl} ...");
+            log.Report(T("Engine.OpeningList", listUrl));
             await page.GotoAsync(listUrl, new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
             await WaitForSecurityCheckAsync(page, _headless, log, ct);
             guard.SiteLoaded(page.Url);
@@ -97,6 +98,7 @@ public sealed partial class CbzMaker
     [GeneratedRegex(@"\d+(?:[.,]\d+)?(?!.*\d)")]
     private static partial Regex LastNumberInUrl();
 
-    [GeneratedRegex(@"^\s*(capitolo|cap\.?|chapter|ch\.?|episodio|ep\.?)?\s*[\d.,]+\s*[-:–—]?\s*", RegexOptions.IgnoreCase)]
+    // Italiano, inglese e spagnolo: "Capitolo", "Chapter", "Capítulo", "Episodio", "Episode"...
+    [GeneratedRegex(@"^\s*(capitolo|capítulo|capitulo|cap\.?|chapter|ch\.?|episodio|episode|ep\.?)?\s*[\d.,]+\s*[-:–—]?\s*", RegexOptions.IgnoreCase)]
     private static partial Regex ChapterPrefix();
 }
