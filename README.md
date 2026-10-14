@@ -1,80 +1,95 @@
-# AutoMangator
+<p align="center">
+  <img src="Assets/icon.png" width="128" alt="AutoMangator">
+</p>
 
-Piccola app per **Windows e macOS** che trasforma una pagina web piena di immagini (ad esempio il capitolo di un fumetto) in un file **.cbz** da leggere sull'ebook reader.
+<h1 align="center">AutoMangator</h1>
 
-Al posto del vecchio flusso manuale (Ctrl+S della pagina → copia delle sole immagini → zip senza compressione → rinomina in .cbz) basta incollare l'indirizzo e premere **Crea CBZ**.
+<p align="center">
+  <b>Dalla pagina web al tuo ebook reader, in un clic.</b><br>
+  Incolla l'indirizzo di un capitolo: AutoMangator raccoglie le pagine e crea un fumetto <code>.cbz</code> o un <code>EPUB</code> pronto per Kobo.
+</p>
 
-## Download
-Le versioni pronte sono nelle [Release](https://github.com/nmorrione/AutoMangator/releases/latest):
-- **Windows**: `AutoMangator-Windows-x64.exe`, un unico file portable, non serve installare nulla.
-- **macOS** (Apple Silicon): `AutoMangator-macOS-AppleSilicon.zip`, da estrarre e spostare in Applicazioni.
-  L'app non è firmata da Apple: al primo avvio va sbloccata da **Impostazioni di Sistema → Privacy e sicurezza → Apri comunque**
-  (oppure `xattr -dr com.apple.quarantine /Applications/AutoMangator.app`).
+<p align="center">
+  <a href="https://github.com/nmorrione/AutoMangator/releases/latest"><img src="https://img.shields.io/github/v/release/nmorrione/AutoMangator?label=versione&color=e5245e" alt="Ultima versione"></a>
+  <img src="https://img.shields.io/badge/Windows-10%20%7C%2011-0078d4" alt="Windows 10 e 11">
+  <img src="https://img.shields.io/badge/macOS-Apple%20Silicon-555555" alt="macOS Apple Silicon">
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/nmorrione/AutoMangator?label=licenza&color=ff8a3d" alt="Licenza MIT"></a>
+</p>
 
-## Come funziona
-1. Apre la pagina in modo invisibile tramite [Playwright](https://playwright.dev/dotnet/):
-   su Windows con Microsoft Edge (già presente), su macOS con WebKit, il motore di Safari (scaricato automaticamente al primo avvio).
-2. Scorre la pagina fino in fondo, così le immagini caricate "pigramente" vengono scaricate.
-3. Prende le immagini nell'ordine in cui compaiono, scartando quelle piccole (loghi, icone, banner) e i formati non adatti (SVG).
-4. Le salva in uno zip **senza compressione**, con nomi `001.jpg`, `002.png`, … ed estensione `.cbz`.
+<p align="center">
+  <a href="https://github.com/nmorrione/AutoMangator/releases/latest/download/AutoMangator-Windows-x64.exe"><b>⬇ Scarica per Windows</b></a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/nmorrione/AutoMangator/releases/latest/download/AutoMangator-macOS-AppleSilicon.zip"><b>⬇ Scarica per Mac</b></a>
+</p>
 
-### Reader a una pagina per volta
-Alcuni siti non mostrano tutto il capitolo ma un reader con una pagina alla volta. L'app se ne accorge da sola
-e lo **sfoglia** come farebbe una persona (freccia destra o pulsante "pagina successiva"), raccogliendo le pagine
-in ordine finché il capitolo finisce. Se un reader non viene riconosciuto, spunta **Sfoglia il reader pagina per
-pagina**: in quel caso prova anche il clic sul lato destro della pagina.
+<p align="center">
+  <img src="docs/screenshot.png" width="560" alt="La finestra di AutoMangator">
+</p>
 
-Durante il download popup e nuove schede vengono chiusi, e la pagina non può essere portata su altri siti
-(pubblicità) né, mentre si sfoglia un reader, fuori dal capitolo.
+## Cosa fa
+- 📖 **Capitolo intero in un file**: apre la pagina, la scorre fino in fondo e raccoglie le immagini nell'ordine giusto.
+- 🔁 **Funziona anche con i reader a una pagina per volta**: se ne accorge da solo e li sfoglia fino all'ultima pagina.
+- 📦 **Più capitoli in coda**: un indirizzo per riga, un file per capitolo.
+- 📚 **EPUB per Kobo**: titolo, serie, numero del capitolo, autore e trama compaiono nella libreria del Kobo.
+- 🖼️ **Immagini originali**: nessuna ricompressione, la qualità resta quella del sito.
+- 🛡️ **Niente pubblicità**: popup e nuove schede vengono chiusi, e la pagina non può essere portata su altri siti.
+- 💼 **Portable**: un unico file da avviare, niente installazione.
 
-Se un sito mostra una **verifica di sicurezza** anti-bot (es. Cloudflare), spunta **Mostra il browser**:
-se la verifica compare nella finestra completala tu, e il download prosegue da solo.
+## Come si usa
+1. Incolla l'indirizzo del capitolo (o più indirizzi, uno per riga).
+2. Scegli la cartella dove salvare.
+3. Premi **Crea CBZ**. Fatto!
 
-## Uso
-- **Indirizzi**: uno per riga; ogni indirizzo diventa un file .cbz.
-- **Nome file**: opzionale; vuoto = titolo della pagina. Con più indirizzi viene numerato.
-- **Cartella di destinazione**: di default la cartella Download.
-- **Lato minimo immagine**: sotto questa dimensione (px) un'immagine viene scartata.
-- **Mostra il browser**: utile se il sito blocca i browser invisibili o chiede una verifica.
+Vuoi leggerlo sul **Kobo**? Spunta **Crea EPUB per Kobo**, scrivi il nome della serie (ed eventualmente autore, genere, trama...) e copia gli EPUB nel Kobo via USB.
 
-## EPUB per Kobo
-Il software di serie dei Kobo non legge i dati contenuti nei `.cbz` (mostra il nome del file e "Autore sconosciuto").
-Con **EPUB per Kobo...** si sceglie la cartella con i `.cbz` dei capitoli e si inseriscono una volta sola i dati della serie
-(serie, autore, disegnatore, editore, anno, genere, lingua, trama, lettura da destra a sinistra).
-Per ogni capitolo viene creato, nella sottocartella `Kobo`, un `.kepub.epub` a layout fisso con quei dati:
-- titolo "Serie 012 - Titolo del capitolo", così i capitoli restano in ordine in libreria;
-- numero del capitolo preso dal nome del file (correggibile nella tabella); i file senza numero vanno in coda;
-- immagini originali, senza ricompressione (solo WebP e AVIF, che Kobo non mostra, diventano JPEG);
-- serie e numero anche nei metadati: il Kobo li mostra nella scheda Serie se è installato [NickelSeries](https://pgaskin.net/kepubify/ns/).
+### Cosa spuntare
+Di solito **niente**: AutoMangator capisce da solo se la pagina mostra tutto il capitolo o è un reader da sfogliare.
 
-Basta copiare gli EPUB nel Kobo collegato via USB. Riaprendo la stessa cartella, i dati della serie vengono riproposti.
+| Casella | Quando serve |
+|---|---|
+| **Mostra il browser** | Il sito ha una protezione anti-bot. Te lo dice l'app e spunta la casella per te: premi di nuovo il pulsante e, se nella finestra compare una verifica, completala tu. |
+| **Sfoglia il reader pagina per pagina** | È un reader a una pagina per volta, ma ti è arrivata solo la prima pagina. |
+| **Crea EPUB per Kobo** | Vuoi gli EPUB con i dati della serie invece del semplice `.cbz`. |
 
-Si può anche fare tutto in un passaggio dalla finestra principale: spuntando **Crea EPUB per Kobo** compaiono gli stessi
-campi e ogni pagina scaricata diventa direttamente un EPUB. Il **numero del capitolo** si può indicare (con più indirizzi
-aumenta di 1 per ciascuno) oppure lasciare vuoto per prenderlo dal titolo della pagina; il `.cbz` viene conservato solo
-se si spunta **Conserva anche il file .cbz**.
+Hai già una cartella piena di `.cbz`? Il pulsante **EPUB per Kobo...** li trasforma tutti in una volta, con una tabella per correggere numeri e titoli dei capitoli.
 
-## Da terminale
-- `AutoMangator --cli <indirizzo> [cartella] [--reader] [--show]`: crea il `.cbz` senza aprire la finestra
-  (`--reader` forza lo sfoglio del reader, `--show` mostra il browser).
-- `AutoMangator --epub <cartella> <serie> [autore]`: crea gli EPUB per Kobo dai `.cbz` della cartella.
+## Installazione
+**Windows 10/11**: scarica `AutoMangator-Windows-x64.exe` e avvialo. Usa Microsoft Edge, già presente in Windows.
+Se compare "Windows ha protetto il PC", clicca **Ulteriori informazioni → Esegui comunque**: l'app non è firmata con un certificato a pagamento.
 
-## Compilare
-Serve il .NET 10 SDK. L'interfaccia è fatta con [Avalonia UI](https://avaloniaui.net/).
+**Mac (Apple Silicon)**: scarica lo zip, estrailo e sposta `AutoMangator.app` in **Applicazioni**.
+Al primo avvio macOS la blocca perché non è firmata da Apple: vai in **Impostazioni di Sistema → Privacy e sicurezza → Apri comunque**.
+Alla prima conversione scarica WebKit, il motore di Safari (una volta sola).
 
-Exe singolo portable per Windows (runtime .NET incluso) in `publish-portable\`:
-```
-dotnet publish AutoMangator.csproj -p:PublishProfile=Portable
-```
+## Domande frequenti
+<details>
+<summary><b>Il Kobo mostra "Autore sconosciuto" e il nome del file</b></summary>
 
-## Nuove versioni
-Le Release si pubblicano da sole con GitHub Actions ([build.yml](.github/workflows/build.yml)):
-aggiornare `<Version>` nel `.csproj`, poi creare e caricare un tag:
-```
-git tag v1.2.0
-git push origin v1.2.0
-```
-GitHub compila la versione Windows e quella macOS, le prova su una pagina vera e crea la Release con entrambi i file.
+È normale con i `.cbz`: il software del Kobo non legge i dati al loro interno. Usa **Crea EPUB per Kobo** e vedrai titolo, autore e copertina.
+La scheda **Serie** del Kobo, per i libri copiati via USB, richiede la mod gratuita [NickelSeries](https://pgaskin.net/kepubify/ns/).
+</details>
 
-## Licenza
-[MIT](LICENSE)
+<details>
+<summary><b>Mi è arrivata solo la prima pagina</b></summary>
+
+Il sito usa un reader che AutoMangator non ha riconosciuto: spunta **Sfoglia il reader pagina per pagina** e riprova.
+Se ancora non funziona, [apri una segnalazione](https://github.com/nmorrione/AutoMangator/issues) con l'indirizzo del sito.
+</details>
+
+<details>
+<summary><b>Nel file finiscono loghi o banner</b></summary>
+
+Alza **Lato minimo immagine**: le immagini più piccole di quel valore vengono scartate. Se invece mancano pagine, abbassalo.
+</details>
+
+<details>
+<summary><b>È gratis?</b></summary>
+
+Sì, ed è open source con licenza MIT. Usalo solo per contenuti che hai il diritto di scaricare.
+</details>
+
+---
+
+<p align="center">
+  <sub>Sei uno sviluppatore? Trovi come compilarlo e come funziona in <a href="docs/SVILUPPO.md">docs/SVILUPPO.md</a> · Licenza <a href="LICENSE">MIT</a></sub>
+</p>
