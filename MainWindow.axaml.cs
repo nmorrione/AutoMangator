@@ -86,11 +86,9 @@ public partial class MainWindow : Window
 
     private void chkEpub_IsCheckedChanged(object? sender, RoutedEventArgs e)
     {
-        bool on = chkEpub.IsChecked == true;
-        if (pnlEpub.IsVisible == on) return;
-        pnlEpub.IsVisible = on;
+        // Il riquadro EPUB è sempre visibile: la spunta ne attiva i campi
+        pnlEpub.IsEnabled = chkEpub.IsChecked == true;
         UpdateStartLabel();
-        FitHeight();
     }
 
     private void chkParallel_IsCheckedChanged(object? sender, RoutedEventArgs e) =>
@@ -525,7 +523,8 @@ public partial class MainWindow : Window
         txtUrls.IsReadOnly = txtName.IsReadOnly = txtFolder.IsReadOnly = running;
         txtListUrl.IsReadOnly = txtFrom.IsReadOnly = txtTo.IsReadOnly = running;
         btnBrowse.IsEnabled = numMin.IsEnabled = chkShow.IsEnabled = chkReader.IsEnabled = btnConvert.IsEnabled = !running;
-        chkEpub.IsEnabled = pnlEpub.IsEnabled = chkVolume.IsEnabled = chkParallel.IsEnabled = !running;
+        chkEpub.IsEnabled = chkVolume.IsEnabled = chkParallel.IsEnabled = !running;
+        pnlEpub.IsEnabled = !running && chkEpub.IsChecked == true;
         numParallel.IsEnabled = !running && chkParallel.IsChecked == true;
         progress.IsIndeterminate = running;
     }

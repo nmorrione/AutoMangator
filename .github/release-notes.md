@@ -15,6 +15,7 @@ Paste the address of a chapter and Web2Comic creates a `.cbz` comic or an **EPUB
 - works with pages that show the whole chapter and with **page-by-page readers**, which it detects and pages through on its own;
 - **Find chapters** fills in the addresses from the page that lists a series' chapters (with a from/to range);
 - **Create a single volume** merges all the chapters into one file, with a table of contents;
+- **Download several chapters in parallel** (up to 8 at once) is about twice as fast, and chapters that hit a momentary site error are retried automatically;
 - **Optimized for Kobo** creates `.kepub.epub` files, which the Kobo shows full screen;
 - pop-ups and new tabs are closed, and the page can't be taken to other sites;
 - interface in **English, Italian and Spanish**.

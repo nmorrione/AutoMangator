@@ -4,7 +4,7 @@
         x:Class="Web2Comic.MainWindow"
         Title="Web2Comic"
         Icon="avares://Web2Comic/Assets/icon.png"
-        Width="760" Height="740" MinWidth="600" MinHeight="600"
+        Width="1200" Height="800" MinWidth="980" MinHeight="600"
         WindowStartupLocation="CenterScreen">
 
   <Window.Styles>
@@ -25,15 +25,17 @@
     </Style>
   </Window.Styles>
 
-  <!-- In alto le opzioni (scorrevoli se non stanno nello schermo), in basso il log: altezza fissa
-       con la sua barra di scorrimento, ridimensionabile trascinando la barra di separazione -->
-  <Grid x:Name="root" Margin="12" RowDefinitions="*,Auto,Auto,180">
+  <!-- In alto le opzioni su due colonne (scorrevoli se non stanno nello schermo); sotto, sempre visibili,
+       i pulsanti e il log ad altezza fissa, ridimensionabile trascinando la barra di separazione -->
+  <Grid x:Name="root" Margin="12" RowDefinitions="*,Auto,Auto,Auto,170">
   <ScrollViewer Grid.Row="0" x:Name="formScroll" VerticalScrollBarVisibility="Auto">
-  <Grid x:Name="layout" RowDefinitions="Auto,Auto,Auto,Auto,110,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="4">
+  <Grid x:Name="layout" ColumnDefinitions="*,16,480">
 
-    <!-- Lingua dell'interfaccia -->
-    <Grid Grid.Row="0" Margin="0,0,0,6">
-      <StackPanel Orientation="Horizontal" Spacing="4">
+    <!-- ===== Colonna sinistra: cosa scaricare, dove, come ===== -->
+    <StackPanel Grid.Column="0" Spacing="4">
+
+      <!-- Lingua dell'interfaccia -->
+      <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,0,0,6">
         <TextBlock VerticalAlignment="Center" Margin="0,0,4,0" Text="{local:Tr Main.LanguageLabel}" />
         <Button x:Name="btnLangIt" Classes="flag" Tag="it" ToolTip.Tip="Italiano" Click="btnLanguage_Click">
           <Border CornerRadius="2" ClipToBounds="True"><Image Source="avares://Web2Comic/Assets/flags/it.png" Width="27" Height="18" /></Border>
@@ -45,33 +47,31 @@
           <Border CornerRadius="2" ClipToBounds="True"><Image Source="avares://Web2Comic/Assets/flags/es.png" Width="27" Height="18" /></Border>
         </Button>
       </StackPanel>
-    </Grid>
 
-    <!-- Lista capitoli: ne ricava gli indirizzi e li mette in "Indirizzi" -->
-    <TextBlock Grid.Row="1" Text="{local:Tr Main.ListLabel}" TextWrapping="Wrap" />
-    <Grid Grid.Row="2" ColumnDefinitions="*,Auto,70,Auto,70,Auto" ColumnSpacing="6">
-      <TextBox x:Name="txtListUrl" PlaceholderText="https://..." />
-      <TextBlock Grid.Column="1" VerticalAlignment="Center" Text="{local:Tr Main.From}" />
-      <TextBox Grid.Column="2" x:Name="txtFrom" PlaceholderText="{local:Tr Main.FromHint}" />
-      <TextBlock Grid.Column="3" VerticalAlignment="Center" Text="{local:Tr Main.To}" />
-      <TextBox Grid.Column="4" x:Name="txtTo" PlaceholderText="{local:Tr Main.ToHint}" />
-      <Button Grid.Column="5" x:Name="btnFind" Content="{local:Tr Main.Find}" Click="btnFind_Click" />
-    </Grid>
+      <!-- Lista capitoli: ne ricava gli indirizzi e li mette in "Indirizzi" -->
+      <TextBlock Text="{local:Tr Main.ListLabel}" TextWrapping="Wrap" />
+      <Grid ColumnDefinitions="*,Auto,70,Auto,70,Auto" ColumnSpacing="6">
+        <TextBox x:Name="txtListUrl" PlaceholderText="https://..." />
+        <TextBlock Grid.Column="1" VerticalAlignment="Center" Text="{local:Tr Main.From}" />
+        <TextBox Grid.Column="2" x:Name="txtFrom" PlaceholderText="{local:Tr Main.FromHint}" />
+        <TextBlock Grid.Column="3" VerticalAlignment="Center" Text="{local:Tr Main.To}" />
+        <TextBox Grid.Column="4" x:Name="txtTo" PlaceholderText="{local:Tr Main.ToHint}" />
+        <Button Grid.Column="5" x:Name="btnFind" Content="{local:Tr Main.Find}" Click="btnFind_Click" />
+      </Grid>
 
-    <TextBlock Grid.Row="3" Margin="0,8,0,0" Text="{local:Tr Main.Urls}" />
-    <TextBox Grid.Row="4" x:Name="txtUrls" AcceptsReturn="True" TextWrapping="NoWrap" />
+      <TextBlock Margin="0,6,0,0" Text="{local:Tr Main.Urls}" />
+      <TextBox x:Name="txtUrls" Height="110" AcceptsReturn="True" TextWrapping="NoWrap" />
 
-    <TextBlock Grid.Row="5" Margin="0,8,0,0" Text="{local:Tr Main.FileName}" TextWrapping="Wrap" />
-    <TextBox Grid.Row="6" x:Name="txtName" />
+      <TextBlock Margin="0,6,0,0" Text="{local:Tr Main.FileName}" TextWrapping="Wrap" />
+      <TextBox x:Name="txtName" />
 
-    <TextBlock Grid.Row="7" Margin="0,8,0,0" Text="{local:Tr Main.Folder}" />
-    <Grid Grid.Row="8" ColumnDefinitions="*,Auto" ColumnSpacing="6">
-      <TextBox x:Name="txtFolder" />
-      <Button Grid.Column="1" x:Name="btnBrowse" Content="{local:Tr Common.Browse}" Click="btnBrowse_Click" />
-    </Grid>
+      <TextBlock Margin="0,6,0,0" Text="{local:Tr Main.Folder}" />
+      <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6">
+        <TextBox x:Name="txtFolder" />
+        <Button Grid.Column="1" x:Name="btnBrowse" Content="{local:Tr Common.Browse}" Click="btnBrowse_Click" />
+      </Grid>
 
-    <StackPanel Grid.Row="9" Margin="0,8,0,0" Spacing="4">
-      <WrapPanel Orientation="Horizontal" ItemSpacing="10" LineSpacing="4">
+      <WrapPanel Margin="0,8,0,0" Orientation="Horizontal" ItemSpacing="10" LineSpacing="4">
         <StackPanel Orientation="Horizontal" Spacing="10">
           <TextBlock VerticalAlignment="Center" Text="{local:Tr Main.MinSide}" />
           <NumericUpDown x:Name="numMin" Width="130" Minimum="0" Maximum="5000" Increment="50" Value="300" FormatString="0" />
@@ -89,47 +89,48 @@
           <TextBlock VerticalAlignment="Center" Text="{local:Tr Main.ParallelUnit}" />
         </StackPanel>
       </WrapPanel>
+      <CheckBox x:Name="chkVolume" IsCheckedChanged="chkVolume_IsCheckedChanged">
+        <TextBlock Text="{local:Tr Main.SingleVolume}" TextWrapping="Wrap" />
+      </CheckBox>
     </StackPanel>
 
-    <!-- Opzioni aggiuntive: EPUB con i dati della serie al posto del semplice .cbz -->
-    <CheckBox Grid.Row="10" Margin="0,4,0,0" x:Name="chkEpub" Content="{local:Tr Main.Epub}"
-              IsCheckedChanged="chkEpub_IsCheckedChanged" />
-    <Border Grid.Row="11" x:Name="pnlEpub" IsVisible="False" Padding="10" CornerRadius="4" BorderThickness="1"
+    <!-- ===== Colonna destra: EPUB con i dati della serie (attiva solo con la spunta) ===== -->
+    <Border Grid.Column="2" VerticalAlignment="Top" Padding="12,8,12,12" CornerRadius="4" BorderThickness="1"
             BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}">
       <StackPanel Spacing="8">
-        <local:SeriesInfoPanel x:Name="series" />
-        <WrapPanel Orientation="Horizontal" ItemSpacing="24" LineSpacing="8">
-          <StackPanel Orientation="Horizontal" Spacing="8" ToolTip.Tip="{local:Tr Main.ChapterTip}">
-            <TextBlock VerticalAlignment="Center" Text="{local:Tr Main.Chapter}" />
-            <TextBox x:Name="txtChapter" Width="90" PlaceholderText="{local:Tr Main.ChapterHint}" />
-          </StackPanel>
-          <StackPanel x:Name="pnlVolumeNumber" Orientation="Horizontal" Spacing="8" IsVisible="False"
-                      ToolTip.Tip="{local:Tr Main.VolumeTip}">
-            <TextBlock VerticalAlignment="Center" Text="{local:Tr Main.Volume}" />
-            <TextBox x:Name="txtVolume" Width="90" PlaceholderText="{local:Tr Main.VolumeHint}" />
-          </StackPanel>
-          <CheckBox x:Name="chkKeepCbz" Content="{local:Tr Main.KeepCbz}" />
-        </WrapPanel>
+        <CheckBox x:Name="chkEpub" FontWeight="SemiBold" Content="{local:Tr Main.Epub}"
+                  IsCheckedChanged="chkEpub_IsCheckedChanged" />
+        <StackPanel x:Name="pnlEpub" Spacing="8" IsEnabled="False">
+          <local:SeriesInfoPanel x:Name="series" />
+          <WrapPanel Orientation="Horizontal" ItemSpacing="16" LineSpacing="8">
+            <StackPanel Orientation="Horizontal" Spacing="8" ToolTip.Tip="{local:Tr Main.ChapterTip}">
+              <TextBlock VerticalAlignment="Center" Text="{local:Tr Main.Chapter}" />
+              <TextBox x:Name="txtChapter" Width="90" PlaceholderText="{local:Tr Main.ChapterHint}" />
+            </StackPanel>
+            <StackPanel x:Name="pnlVolumeNumber" Orientation="Horizontal" Spacing="8" IsVisible="False"
+                        ToolTip.Tip="{local:Tr Main.VolumeTip}">
+              <TextBlock VerticalAlignment="Center" Text="{local:Tr Main.Volume}" />
+              <TextBox x:Name="txtVolume" Width="90" PlaceholderText="{local:Tr Main.VolumeHint}" />
+            </StackPanel>
+            <CheckBox x:Name="chkKeepCbz" Content="{local:Tr Main.KeepCbz}" />
+          </WrapPanel>
+        </StackPanel>
       </StackPanel>
     </Border>
-
-    <CheckBox Grid.Row="12" x:Name="chkVolume" IsCheckedChanged="chkVolume_IsCheckedChanged">
-      <TextBlock Text="{local:Tr Main.SingleVolume}" TextWrapping="Wrap" />
-    </CheckBox>
-
-    <WrapPanel Grid.Row="13" Margin="0,8,0,0" Orientation="Horizontal" ItemSpacing="8" LineSpacing="8">
-      <Button x:Name="btnStart" Classes="accent" MinWidth="120" Click="btnStart_Click" />
-      <Button x:Name="btnCancel" Content="{local:Tr Common.Cancel}" MinWidth="100" IsEnabled="False" Click="btnCancel_Click" />
-      <Button x:Name="btnOpenFolder" Content="{local:Tr Common.OpenFolder}" MinWidth="120" Click="btnOpenFolder_Click" />
-      <Button x:Name="btnConvert" Content="{local:Tr Main.Convert}" MinWidth="140" Click="btnConvert_Click"
-              ToolTip.Tip="{local:Tr Main.ConvertTip}" />
-    </WrapPanel>
   </Grid>
   </ScrollViewer>
 
-  <ProgressBar Grid.Row="1" x:Name="progress" Margin="0,8,0,0" />
-  <GridSplitter Grid.Row="2" Height="8" ResizeDirection="Rows" Background="Transparent" />
-  <TextBox Grid.Row="3" MinHeight="80" x:Name="txtLog" IsReadOnly="True" AcceptsReturn="True" TextWrapping="NoWrap"
+  <!-- Pulsanti, avanzamento e log: sempre visibili sotto le opzioni -->
+  <WrapPanel Grid.Row="1" Margin="0,10,0,0" Orientation="Horizontal" ItemSpacing="8" LineSpacing="8">
+    <Button x:Name="btnStart" Classes="accent" MinWidth="140" Click="btnStart_Click" />
+    <Button x:Name="btnCancel" Content="{local:Tr Common.Cancel}" MinWidth="100" IsEnabled="False" Click="btnCancel_Click" />
+    <Button x:Name="btnOpenFolder" Content="{local:Tr Common.OpenFolder}" MinWidth="120" Click="btnOpenFolder_Click" />
+    <Button x:Name="btnConvert" Content="{local:Tr Main.Convert}" MinWidth="140" Click="btnConvert_Click"
+            ToolTip.Tip="{local:Tr Main.ConvertTip}" />
+  </WrapPanel>
+  <ProgressBar Grid.Row="2" x:Name="progress" Margin="0,8,0,0" />
+  <GridSplitter Grid.Row="3" Height="8" ResizeDirection="Rows" Background="Transparent" />
+  <TextBox Grid.Row="4" MinHeight="80" x:Name="txtLog" IsReadOnly="True" AcceptsReturn="True" TextWrapping="NoWrap"
            ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Auto"
            FontFamily="Cascadia Mono,Consolas,Menlo,monospace" FontSize="12" />
   </Grid>
