@@ -62,7 +62,7 @@ Di solito **niente**: AutoMangator capisce da solo se la pagina mostra tutto il 
 | **Crea EPUB per Kobo** | Vuoi gli EPUB con i dati della serie invece del semplice `.cbz`. |
 | **Crea singolo volume** | Vuoi tutti i capitoli in un unico file invece di uno per capitolo. |
 
-Hai già una cartella piena di `.cbz`? Il pulsante **EPUB per Kobo...** li trasforma tutti in una volta, con una tabella per correggere numeri e titoli dei capitoli.
+Hai già una cartella piena di `.cbz`? Il pulsante **Converti CBZ in EPUB Kobo...** li trasforma tutti in una volta, senza scaricare nulla, con una tabella per correggere numeri e titoli dei capitoli.
 
 ## Installazione
 **Windows 10/11**: scarica `AutoMangator-Windows-x64.exe` e avvialo. Usa Microsoft Edge, già presente in Windows.

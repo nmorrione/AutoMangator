@@ -26,7 +26,7 @@ Durante il download popup e nuove schede vengono chiusi e la pagina non può ess
 ## EPUB per Kobo
 Il Kobo non legge i dati contenuti nei `.cbz`. AutoMangator può creare per ogni capitolo un `.kepub.epub` con serie,
 numero, autore e gli altri dati: spuntando **Crea EPUB per Kobo** nella finestra principale mentre scarichi, oppure
-con **EPUB per Kobo...** partendo da una cartella di `.cbz` già scaricati. Basta poi copiarli nel Kobo via USB.
+con **Converti CBZ in EPUB Kobo...** partendo da una cartella di `.cbz` già scaricati. Basta poi copiarli nel Kobo via USB.
 
 ## Browser usato
 - Windows: Microsoft Edge, già presente nel sistema.

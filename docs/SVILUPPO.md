@@ -11,7 +11,7 @@ per pilotare il browser: Microsoft Edge su Windows, WebKit (scaricato al primo a
 | `CbzMaker.List.cs` | Dalla pagina con la lista dei capitoli ricava gli indirizzi (gruppo di link con lo stesso schema) |
 | `EpubMaker.cs` | Da `.cbz` a `.kepub.epub` a layout fisso con i metadati della serie, anche come volume con indice |
 | `MainWindow.axaml(.cs)` | Finestra principale |
-| `KoboWindow.axaml(.cs)` | Finestra "EPUB per Kobo" per una cartella di `.cbz` |
+| `KoboWindow.axaml(.cs)` | Finestra "Converti CBZ in EPUB Kobo" per una cartella di `.cbz` |
 | `SeriesInfoPanel.axaml(.cs)` | Campi della serie, condivisi dalle due finestre |
 | `Assets/` | Icona: `icon.svg` è la sorgente, il resto si rigenera con `make-icons.cs` |
 

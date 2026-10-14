@@ -70,7 +70,7 @@ public static partial class EpubMaker
     /// <summary>Rilegge i dati comuni da un EPUB già creato in precedenza, se c'è.</summary>
     public static BookInfo? TryReadExisting(string folder)
     {
-        // Nella sottocartella Kobo (finestra "EPUB per Kobo") o nella cartella stessa (finestra principale)
+        // Nella sottocartella Kobo (finestra "Converti CBZ in EPUB Kobo") o nella cartella stessa (finestra principale)
         string? epub = new[] { Path.Combine(folder, OutputFolderName), folder }
             .Where(Directory.Exists)
             .Select(d => Directory.GetFiles(d, "*.epub").Order().FirstOrDefault())

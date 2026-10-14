@@ -73,7 +73,8 @@
       <Button x:Name="btnStart" Content="Crea CBZ" Classes="accent" MinWidth="120" Click="btnStart_Click" />
       <Button x:Name="btnCancel" Content="Annulla" MinWidth="100" IsEnabled="False" Click="btnCancel_Click" />
       <Button x:Name="btnOpenFolder" Content="Apri cartella" MinWidth="120" Click="btnOpenFolder_Click" />
-      <Button x:Name="btnKobo" Content="EPUB per Kobo..." MinWidth="140" Click="btnKobo_Click" />
+      <Button x:Name="btnKobo" Content="Converti CBZ in EPUB Kobo..." MinWidth="140" Click="btnKobo_Click"
+              ToolTip.Tip="Trasforma in EPUB per Kobo i .cbz che hai già in una cartella, senza scaricare nulla" />
     </StackPanel>
 
     <ProgressBar Grid.Row="13" x:Name="progress" Margin="0,6,0,0" />
