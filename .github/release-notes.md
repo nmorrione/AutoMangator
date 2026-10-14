@@ -1,37 +1,25 @@
+🇬🇧 English · [🇮🇹 Italiano](https://github.com/nmorrione/Web2Comic/blob/main/README.it.md) · [🇪🇸 Español](https://github.com/nmorrione/Web2Comic/blob/main/README.es.md)
+
 ## Download
-- **Windows** (10/11, 64 bit): `AutoMangator-Windows-x64.exe`. Un unico file portable: scaricalo e avvialo, non serve installare nulla.
-- **macOS** (Apple Silicon, macOS 14 o successivo): `AutoMangator-macOS-AppleSilicon.zip`. Estrailo e sposta `AutoMangator.app` in Applicazioni.
+- **Windows** (10/11, 64-bit): `Web2Comic-Windows-x64.exe`. A single portable file: download it and run it, nothing to install.
+- **macOS** (Apple Silicon, macOS 14 or later): `Web2Comic-macOS-AppleSilicon.zip`. Extract it and move `Web2Comic.app` to Applications.
 
-## Primo avvio su Mac
-L'app non è firmata da Apple (richiederebbe un abbonamento a pagamento), quindi al primo avvio macOS la blocca. Si sblocca una volta sola, in uno di questi due modi:
-- **Impostazioni di Sistema → Privacy e sicurezza**, in fondo alla pagina: **Apri comunque**;
-- oppure nel Terminale: `xattr -dr com.apple.quarantine /Applications/AutoMangator.app`
+## First launch
+- **Windows**: if "Windows protected your PC" appears, click **More info → Run anyway** (the app isn't signed with a paid certificate).
+- **Mac**: the app isn't signed by Apple, so macOS blocks it the first time. Unlock it once from
+  **System Settings → Privacy & Security → Open Anyway**, or in Terminal: `xattr -dr com.apple.quarantine /Applications/Web2Comic.app`.
+  On the first conversion the app downloads WebKit, Safari's engine (only once, about a hundred MB).
 
-Alla prima conversione l'app scarica WebKit, il motore di Safari (una sola volta, circa un centinaio di MB).
+## What it does
+Paste the address of a chapter and Web2Comic creates a `.cbz` comic or an **EPUB** with title, series and author:
+- works with pages that show the whole chapter and with **page-by-page readers**, which it detects and pages through on its own;
+- **Find chapters** fills in the addresses from the page that lists a series' chapters (with a from/to range);
+- **Create a single volume** merges all the chapters into one file, with a table of contents;
+- **Optimized for Kobo** creates `.kepub.epub` files, which the Kobo shows full screen;
+- pop-ups and new tabs are closed, and the page can't be taken to other sites;
+- interface in **English, Italian and Spanish**.
 
-## Cosa spuntare
-Di solito niente: incolla l'indirizzo e premi **Crea CBZ**. Funziona sia con i siti che mostrano tutto il capitolo
-sia con i **reader a una pagina per volta**, che l'app riconosce e sfoglia da sola.
-- **Mostra il browser**: per i siti con protezione anti-bot. L'app se ne accorge, te lo dice e spunta la casella:
-  basta premere di nuovo il pulsante (e completare la verifica nella finestra, se compare).
-- **Sfoglia il reader pagina per pagina**: solo se un reader non viene riconosciuto e arriva soltanto la prima pagina.
+Usually there's nothing to tick. If a site has anti-bot protection the app tells you and ticks **Show the browser** for you:
+press the button again and, if a check appears in the window, complete it yourself.
 
-Durante il download popup e nuove schede vengono chiusi e la pagina non può essere portata su altri siti.
-
-## Lista capitoli e volumi
-- **Trova capitoli**: incolla la pagina del sito che elenca i capitoli, scegli dal/al e gli indirizzi si compilano da soli.
-- **Crea singolo volume**: tutti i capitoli in un solo file (CBZ o EPUB con indice per capitolo e numero del volume).
-  Se un capitolo non si scarica, l'app chiede se creare comunque il volume con gli altri.
-
-## EPUB
-Oltre al `.cbz`, AutoMangator crea **EPUB standard** con serie, numero, autore e gli altri dati, leggibili da tutti gli
-ebook reader: spuntando **Crea EPUB** nella finestra principale mentre scarichi, oppure con **Converti CBZ in EPUB...**
-partendo da una cartella di `.cbz` già scaricati. Basta poi copiarli nell'ebook reader via USB.
-
-Se leggi su un **Kobo**, spunta **Ottimizzato per Kobo**: l'EPUB viene creato come `.kepub.epub` e il Kobo lo apre col
-suo lettore, che mostra le pagine dei fumetti a schermo intero. Per il **Kindle** usa i `.cbz` con
-[Kindle Comic Converter](https://github.com/ciromattia/kcc).
-
-## Browser usato
-- Windows: Microsoft Edge, già presente nel sistema.
-- macOS: WebKit di Playwright, scaricato automaticamente.
+Full guide in the [README](https://github.com/nmorrione/Web2Comic#readme).

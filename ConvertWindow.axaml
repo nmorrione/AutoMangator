@@ -1,9 +1,9 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:local="using:AutoMangator"
-        x:Class="AutoMangator.ConvertWindow"
+        xmlns:local="using:Web2Comic"
+        x:Class="Web2Comic.ConvertWindow"
         Title="{local:Tr Convert.Title}"
-        Icon="avares://AutoMangator/Assets/icon.png"
+        Icon="avares://Web2Comic/Assets/icon.png"
         Width="860" Height="820" MinWidth="680" MinHeight="640"
         WindowStartupLocation="CenterOwner">
 

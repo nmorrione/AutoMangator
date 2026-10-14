@@ -1,9 +1,9 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:local="using:AutoMangator"
-        x:Class="AutoMangator.MainWindow"
-        Title="AutoMangator"
-        Icon="avares://AutoMangator/Assets/icon.png"
+        xmlns:local="using:Web2Comic"
+        x:Class="Web2Comic.MainWindow"
+        Title="Web2Comic"
+        Icon="avares://Web2Comic/Assets/icon.png"
         Width="760" Height="740" MinWidth="600" MinHeight="600"
         WindowStartupLocation="CenterScreen">
 
@@ -30,16 +30,17 @@
   <Grid x:Name="layout" Margin="12" RowDefinitions="Auto,Auto,Auto,Auto,110,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,*" RowSpacing="4">
 
     <!-- Lingua dell'interfaccia -->
-    <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
-      <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+    <Grid Grid.Row="0" Margin="0,0,0,6">
+      <StackPanel Orientation="Horizontal" Spacing="4">
+        <TextBlock VerticalAlignment="Center" Margin="0,0,4,0" Text="{local:Tr Main.LanguageLabel}" />
         <Button x:Name="btnLangIt" Classes="flag" Tag="it" ToolTip.Tip="Italiano" Click="btnLanguage_Click">
-          <Border CornerRadius="2" ClipToBounds="True"><Image Source="avares://AutoMangator/Assets/flags/it.png" Width="27" Height="18" /></Border>
+          <Border CornerRadius="2" ClipToBounds="True"><Image Source="avares://Web2Comic/Assets/flags/it.png" Width="27" Height="18" /></Border>
         </Button>
         <Button x:Name="btnLangEn" Classes="flag" Tag="en" ToolTip.Tip="English" Click="btnLanguage_Click">
-          <Border CornerRadius="2" ClipToBounds="True"><Image Source="avares://AutoMangator/Assets/flags/en.png" Width="27" Height="18" /></Border>
+          <Border CornerRadius="2" ClipToBounds="True"><Image Source="avares://Web2Comic/Assets/flags/en.png" Width="27" Height="18" /></Border>
         </Button>
         <Button x:Name="btnLangEs" Classes="flag" Tag="es" ToolTip.Tip="Español" Click="btnLanguage_Click">
-          <Border CornerRadius="2" ClipToBounds="True"><Image Source="avares://AutoMangator/Assets/flags/es.png" Width="27" Height="18" /></Border>
+          <Border CornerRadius="2" ClipToBounds="True"><Image Source="avares://Web2Comic/Assets/flags/es.png" Width="27" Height="18" /></Border>
         </Button>
       </StackPanel>
     </Grid>

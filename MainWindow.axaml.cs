@@ -6,9 +6,9 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Platform.Storage;
-using static AutoMangator.Loc;
+using static Web2Comic.Loc;
 
-namespace AutoMangator;
+namespace Web2Comic;
 
 public partial class MainWindow : Window
 {
@@ -329,7 +329,7 @@ public partial class MainWindow : Window
     // Tutti i capitoli in un unico file. Ogni capitolo viene prima scaricato in una cartella temporanea.
     private async Task<bool> CreateVolumeAsync(CbzMaker maker, Job job, IProgress<string> log, CancellationToken ct)
     {
-        string temp = Path.Combine(Path.GetTempPath(), "AutoMangator", Guid.NewGuid().ToString("N"));
+        string temp = Path.Combine(Path.GetTempPath(), "Web2Comic", Guid.NewGuid().ToString("N"));
         var chapters = new List<ChapterInfo>();
         var failed = new List<string>();
         bool antiBot = false;

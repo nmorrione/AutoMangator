@@ -1,9 +1,9 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
-using static AutoMangator.Loc;
+using static Web2Comic.Loc;
 
-namespace AutoMangator;
+namespace Web2Comic;
 
 /// <summary>Chiede i dati della serie e crea un EPUB da ogni .cbz di una cartella.</summary>
 public partial class ConvertWindow : Window

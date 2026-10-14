@@ -2,7 +2,7 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 
-namespace AutoMangator;
+namespace Web2Comic;
 
 public partial class App : Application
 {

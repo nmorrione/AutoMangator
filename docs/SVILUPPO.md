@@ -1,4 +1,6 @@
-# AutoMangator per sviluppatori
+# Web2Comic per sviluppatori
+
+> Questa pagina è in italiano. / This page is in Italian: the app and the [README](../README.md) are also in English and Spanish.
 
 App desktop in C# (.NET 10) con interfaccia [Avalonia UI](https://avaloniaui.net/) e [Playwright](https://playwright.dev/dotnet/)
 per pilotare il browser: Microsoft Edge su Windows, WebKit (scaricato al primo avvio) su macOS.
@@ -32,13 +34,13 @@ Serve il .NET 10 SDK.
 
 Exe singolo portable per Windows (runtime .NET incluso) in `publish-portable\`:
 ```
-dotnet publish AutoMangator.csproj -p:PublishProfile=Portable
+dotnet publish Web2Comic.csproj -p:PublishProfile=Portable
 ```
 
 ## Da terminale
-- `AutoMangator --cli <indirizzo> [cartella] [--reader] [--show]`: crea il `.cbz` senza aprire la finestra
+- `Web2Comic --cli <indirizzo> [cartella] [--reader] [--show]`: crea il `.cbz` senza aprire la finestra
   (`--reader` forza lo sfoglio del reader, `--show` mostra il browser).
-- `AutoMangator --epub <cartella> <serie> [autore] [--kobo]`: crea gli EPUB dai `.cbz` della cartella, nella sottocartella `EPUB`
+- `Web2Comic --epub <cartella> <serie> [autore] [--kobo]`: crea gli EPUB dai `.cbz` della cartella, nella sottocartella `EPUB`
   (`--kobo` li crea come `.kepub.epub`).
 
 ## Icone

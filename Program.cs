@@ -1,13 +1,13 @@
 using Avalonia;
 
-namespace AutoMangator;
+namespace Web2Comic;
 
 internal static class Program
 {
     [STAThread]
     private static int Main(string[] args)
     {
-        // Senza finestra: AutoMangator --cli <url> [cartella]  (usato anche dai test su GitHub Actions)
+        // Senza finestra: Web2Comic --cli <url> [cartella]  (usato anche dai test su GitHub Actions)
         // Opzioni in fondo: --reader sfoglia la pagina come un reader anche se non viene riconosciuto,
         // --show mostra il browser (per i siti con verifica di sicurezza)
         if (args is ["--cli", var url, ..])
@@ -17,7 +17,7 @@ internal static class Program
             return RunCliAsync(url, rest.Length > 0 ? rest[0] : DefaultOutputFolder,
                 args.Contains("--reader"), args.Contains("--show")).GetAwaiter().GetResult();
         }
-        // AutoMangator --epub <cartella con i .cbz> <serie> [autore] [--kobo]
+        // Web2Comic --epub <cartella con i .cbz> <serie> [autore] [--kobo]
         if (args is ["--epub", var folder, var series, ..])
         {
             var rest = args.Skip(3).Where(a => a != "--kobo").ToArray();

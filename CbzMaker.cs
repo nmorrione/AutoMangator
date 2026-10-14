@@ -1,9 +1,9 @@
 using System.Collections.Concurrent;
 using System.IO.Compression;
 using Microsoft.Playwright;
-using static AutoMangator.Loc;
+using static Web2Comic.Loc;
 
-namespace AutoMangator;
+namespace Web2Comic;
 
 /// <summary>
 /// Apre pagine web con Playwright (Edge su Windows, WebKit altrove), raccoglie le immagini

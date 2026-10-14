@@ -1,4 +1,4 @@
-# Compila AutoMangator per Windows e macOS, prova gli eseguibili su una pagina vera
+# Compila Web2Comic per Windows e macOS, prova gli eseguibili su una pagina vera
 # e, se il push è un tag "v*" (es. v1.2.0), pubblica la Release con entrambi i file.
 # Avviabile anche a mano da GitHub (Actions > Build > Run workflow): in quel caso
 # i file compilati restano scaricabili come artifact, senza creare una Release.
@@ -30,28 +30,28 @@ jobs:
           if [[ "$GITHUB_REF" == refs/tags/v* ]]; then echo "VERSION_ARG=-p:Version=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"; fi
 
       - name: Pubblica exe portable
-        run: dotnet publish AutoMangator.csproj -p:PublishProfile=Portable ${{ env.VERSION_ARG }}
+        run: dotnet publish Web2Comic.csproj -p:PublishProfile=Portable ${{ env.VERSION_ARG }}
 
       - name: Prova su una pagina vera
         run: |
-          $out = & .\publish-portable\AutoMangator.exe --cli $env:TEST_URL "$env:RUNNER_TEMP\cbz" | Out-String
+          $out = & .\publish-portable\Web2Comic.exe --cli $env:TEST_URL "$env:RUNNER_TEMP\cbz" | Out-String
           Write-Host $out
           if ($LASTEXITCODE -ne 0 -or -not (Get-ChildItem "$env:RUNNER_TEMP\cbz\*.cbz")) { exit 1 }
 
       - name: Prova la creazione degli EPUB (standard e per Kobo)
         run: |
-          $out = & .\publish-portable\AutoMangator.exe --epub "$env:RUNNER_TEMP\cbz" "Serie di prova" "Autore di prova" | Out-String
+          $out = & .\publish-portable\Web2Comic.exe --epub "$env:RUNNER_TEMP\cbz" "Serie di prova" "Autore di prova" | Out-String
           Write-Host $out
           if ($LASTEXITCODE -ne 0 -or -not (Get-ChildItem "$env:RUNNER_TEMP\cbz\EPUB\*.epub" -Exclude *.kepub.epub)) { exit 1 }
-          $out = & .\publish-portable\AutoMangator.exe --epub "$env:RUNNER_TEMP\cbz" "Serie di prova" "Autore di prova" --kobo | Out-String
+          $out = & .\publish-portable\Web2Comic.exe --epub "$env:RUNNER_TEMP\cbz" "Serie di prova" "Autore di prova" --kobo | Out-String
           Write-Host $out
           if ($LASTEXITCODE -ne 0 -or -not (Get-ChildItem "$env:RUNNER_TEMP\cbz\EPUB\*.kepub.epub")) { exit 1 }
 
-      - run: Move-Item publish-portable\AutoMangator.exe AutoMangator-Windows-x64.exe
+      - run: Move-Item publish-portable\Web2Comic.exe Web2Comic-Windows-x64.exe
       - uses: actions/upload-artifact@v4
         with:
           name: windows
-          path: AutoMangator-Windows-x64.exe
+          path: Web2Comic-Windows-x64.exe
 
   macos:
     runs-on: macos-latest   # Apple Silicon
@@ -63,16 +63,16 @@ jobs:
 
       - name: Versione dal tag
         run: |
-          VERSION=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' AutoMangator.csproj)
+          VERSION=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' Web2Comic.csproj)
           if [[ "$GITHUB_REF" == refs/tags/v* ]]; then VERSION="${GITHUB_REF_NAME#v}"; fi
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
 
       - name: Pubblica
-        run: dotnet publish AutoMangator.csproj -c Release -r osx-arm64 --self-contained -p:DebugType=none -p:Version=$VERSION -o out
+        run: dotnet publish Web2Comic.csproj -c Release -r osx-arm64 --self-contained -p:DebugType=none -p:Version=$VERSION -o out
 
-      - name: Crea AutoMangator.app
+      - name: Crea Web2Comic.app
         run: |
-          APP=AutoMangator.app
+          APP=Web2Comic.app
           mkdir -p $APP/Contents/MacOS $APP/Contents/Resources
           cp -R out/. $APP/Contents/MacOS/
           sed "s/__VERSION__/$VERSION/g" .github/macos/Info.plist > $APP/Contents/Info.plist
@@ -84,7 +84,7 @@ jobs:
           # Firma ad-hoc (gratuita): prima ogni file in Contents/MacOS (anche le .dll, che macOS
           # considera parti del codice) e il node del driver, poi il bundle, che firma anche
           # l'eseguibile principale
-          find $APP/Contents/MacOS -type f ! -path "$APP/Contents/MacOS/AutoMangator" -print0 \
+          find $APP/Contents/MacOS -type f ! -path "$APP/Contents/MacOS/Web2Comic" -print0 \
             | xargs -0 codesign --force --sign -
           find $APP/Contents/Resources/.playwright -name node -type f -exec codesign --force --sign - {} +
           codesign --force --sign - $APP
@@ -92,22 +92,22 @@ jobs:
 
       - name: Prova su una pagina vera (scarica anche WebKit)
         run: |
-          AutoMangator.app/Contents/MacOS/AutoMangator --cli "$TEST_URL" "$RUNNER_TEMP/cbz"
+          Web2Comic.app/Contents/MacOS/Web2Comic --cli "$TEST_URL" "$RUNNER_TEMP/cbz"
           ls "$RUNNER_TEMP"/cbz/*.cbz
 
       - name: Prova la creazione degli EPUB (standard e per Kobo)
         run: |
-          AutoMangator.app/Contents/MacOS/AutoMangator --epub "$RUNNER_TEMP/cbz" "Serie di prova" "Autore di prova"
+          Web2Comic.app/Contents/MacOS/Web2Comic --epub "$RUNNER_TEMP/cbz" "Serie di prova" "Autore di prova"
           ls "$RUNNER_TEMP"/cbz/EPUB/*.epub | grep -v kepub
-          AutoMangator.app/Contents/MacOS/AutoMangator --epub "$RUNNER_TEMP/cbz" "Serie di prova" "Autore di prova" --kobo
+          Web2Comic.app/Contents/MacOS/Web2Comic --epub "$RUNNER_TEMP/cbz" "Serie di prova" "Autore di prova" --kobo
           ls "$RUNNER_TEMP"/cbz/EPUB/*.kepub.epub
 
       - name: Comprimi
-        run: ditto -c -k --keepParent AutoMangator.app AutoMangator-macOS-AppleSilicon.zip
+        run: ditto -c -k --keepParent Web2Comic.app Web2Comic-macOS-AppleSilicon.zip
       - uses: actions/upload-artifact@v4
         with:
           name: macos
-          path: AutoMangator-macOS-AppleSilicon.zip
+          path: Web2Comic-macOS-AppleSilicon.zip
 
   release:
     if: startsWith(github.ref, 'refs/tags/v')
@@ -125,6 +125,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "$GITHUB_REF_NAME" \
-            AutoMangator-Windows-x64.exe AutoMangator-macOS-AppleSilicon.zip \
-            --title "AutoMangator ${GITHUB_REF_NAME#v}" \
+            Web2Comic-Windows-x64.exe Web2Comic-macOS-AppleSilicon.zip \
+            --title "Web2Comic ${GITHUB_REF_NAME#v}" \
             --notes-file .github/release-notes.md

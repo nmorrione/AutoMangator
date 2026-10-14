@@ -5,6 +5,7 @@
   "Common.OpenFolder": "Open folder",
   "Common.ChapterN": "Chapter {0}",
 
+  "Main.LanguageLabel": "Language:",
   "Main.ListLabel": "Chapter list (optional): the page of the site that lists all the chapters",
   "Main.From": "from",
   "Main.FromHint": "first",

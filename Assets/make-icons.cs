@@ -1,11 +1,11 @@
-﻿#:package Microsoft.Playwright@1.63.0
+#:package Microsoft.Playwright@1.63.0
 #:property PublishAot=false
 
 // Genera icon.ico (Windows, a tutta superficie), AppIcon.icns (macOS, griglia Apple con margine)
 // e icon.png (finestra) partendo da icon.svg, disegnando ogni dimensione dal vettoriale;
 // in più le bandierine delle lingue (flags/*.svg -> flags/*.png).
 // Uso (dalla cartella Assets):  dotnet run make-icons.cs -- .
-// Nota: va escluso dalla compilazione dell'app (vedi AutoMangator.csproj)
+// Nota: va escluso dalla compilazione dell'app (vedi Web2Comic.csproj)
 using Microsoft.Playwright;
 
 string assets = args[0];

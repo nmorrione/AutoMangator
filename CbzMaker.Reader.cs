@@ -1,7 +1,7 @@
 using Microsoft.Playwright;
-using static AutoMangator.Loc;
+using static Web2Comic.Loc;
 
-namespace AutoMangator;
+namespace Web2Comic;
 
 /// <summary>Il sito ha mostrato una verifica anti-bot al browser nascosto: va ripetuto col browser visibile.</summary>
 public sealed class SecurityCheckException(string url) : InvalidOperationException(

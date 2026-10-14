@@ -5,6 +5,7 @@
   "Common.OpenFolder": "Apri cartella",
   "Common.ChapterN": "Capitolo {0}",
 
+  "Main.LanguageLabel": "Lingua:",
   "Main.ListLabel": "Lista capitoli (facoltativo): la pagina del sito che elenca tutti i capitoli",
   "Main.From": "dal",
   "Main.FromHint": "primo",

@@ -1,9 +1,9 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
 using Microsoft.Playwright;
-using static AutoMangator.Loc;
+using static Web2Comic.Loc;
 
-namespace AutoMangator;
+namespace Web2Comic;
 
 /// <summary>Un capitolo trovato nella pagina con la lista dei capitoli.</summary>
 public sealed record FoundChapter(string Url, double Number, string Title);

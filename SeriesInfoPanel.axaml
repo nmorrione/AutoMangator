@@ -1,7 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="using:AutoMangator"
-             x:Class="AutoMangator.SeriesInfoPanel">
+             xmlns:local="using:Web2Comic"
+             x:Class="Web2Comic.SeriesInfoPanel">
   <!-- Dati della serie per gli EPUB: usato nella finestra principale e in "Converti CBZ in EPUB" -->
   <StackPanel Spacing="6">
     <Grid ColumnDefinitions="Auto,*,16,Auto,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="6" ColumnSpacing="8">

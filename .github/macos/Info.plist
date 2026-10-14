@@ -3,13 +3,13 @@
 <plist version="1.0">
 <dict>
   <key>CFBundleName</key>
-  <string>AutoMangator</string>
+  <string>Web2Comic</string>
   <key>CFBundleDisplayName</key>
-  <string>AutoMangator</string>
+  <string>Web2Comic</string>
   <key>CFBundleIdentifier</key>
-  <string>com.github.nmorrione.automangator</string>
+  <string>com.github.nmorrione.web2comic</string>
   <key>CFBundleExecutable</key>
-  <string>AutoMangator</string>
+  <string>Web2Comic</string>
   <key>CFBundleIconFile</key>
   <string>AppIcon</string>
   <key>CFBundlePackageType</key>

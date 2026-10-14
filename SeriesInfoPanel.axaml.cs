@@ -1,6 +1,6 @@
 using Avalonia.Controls;
 
-namespace AutoMangator;
+namespace Web2Comic;
 
 public partial class SeriesInfoPanel : UserControl
 {

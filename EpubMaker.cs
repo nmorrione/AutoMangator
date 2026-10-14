@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using SkiaSharp;
 
-namespace AutoMangator;
+namespace Web2Comic;
 
 /// <summary>Dati comuni a tutti i capitoli di una serie.</summary>
 public sealed class BookInfo

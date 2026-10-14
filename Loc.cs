@@ -4,7 +4,7 @@ using System.Text.Json;
 using Avalonia.Data;
 using Avalonia.Markup.Xaml;
 
-namespace AutoMangator;
+namespace Web2Comic;
 
 /// <summary>
 /// Traduzioni dell'interfaccia. I testi stanno in Strings/&lt;lingua&gt;.json, inclusi nell'exe:
@@ -85,7 +85,7 @@ public sealed class Loc : INotifyPropertyChanged
         lock (Cache)
         {
             if (Cache.TryGetValue(code, out var cached)) return cached;
-            using var stream = typeof(Loc).Assembly.GetManifestResourceStream($"AutoMangator.Strings.{code}.json");
+            using var stream = typeof(Loc).Assembly.GetManifestResourceStream($"Web2Comic.Strings.{code}.json");
             var strings = stream is null ? [] : JsonSerializer.Deserialize<Dictionary<string, string>>(stream) ?? [];
             Cache[code] = strings;
             return strings;
