@@ -36,7 +36,7 @@
 - 📋 **From the chapter list**: paste the page that lists a series' chapters, choose from/to and the addresses fill themselves in.
 - 📦 **Several chapters in a row**: one address per line, one file per chapter, or...
 - 📕 **...a single volume**: all the chapters in one file, with a table of contents to jump between chapters.
-- ⚡ **Several chapters in parallel**: up to 6 chapters at once, about twice as fast; if the site has a momentary hiccup, the chapter is retried automatically.
+- ⚡ **Several chapters in parallel**: up to 8 chapters at once, about twice as fast; if the site has a momentary hiccup, the chapter is retried automatically.
 - 📚 **EPUB with series details**: title, series, chapter number, author and summary show up in your ebook reader's library. One click makes it **Kobo**-optimized.
 - 🖼️ **Original images**: no recompression, the quality stays the same as on the site.
 - 🛡️ **No ads**: pop-ups and new tabs are closed, and the page can't be taken to other sites.

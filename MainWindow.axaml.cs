@@ -25,6 +25,8 @@ public partial class MainWindow : Window
         // I testi impostati da codice vanno aggiornati a mano quando cambia la lingua
         Instance.LanguageChanged += OnLanguageChanged;
         OnLanguageChanged();
+        // All'apertura la finestra prende l'altezza giusta per il contenuto (che varia con la lingua)
+        Opened += (_, _) => FitHeight();
     }
 
     private void OnLanguageChanged()
@@ -108,8 +110,10 @@ public partial class MainWindow : Window
     private void FitHeight()
     {
         // Si misura il contenuto (non la ScrollViewer che lo contiene) con altezza libera
-        layout.Measure(new Size(Math.Max(0, Bounds.Width), double.PositiveInfinity));
-        double needed = layout.DesiredSize.Height;
+        layout.Measure(new Size(Math.Max(0, formScroll.Bounds.Width), double.PositiveInfinity));
+        // Le opzioni intere + quello che sta sotto (barra di avanzamento, separatore, log) + i margini
+        double below = root.Bounds.Height - formScroll.Bounds.Height;
+        double needed = layout.DesiredSize.Height + below + root.Margin.Top + root.Margin.Bottom;
         if (needed > Height)
         {
             double before = Height;
@@ -157,35 +161,35 @@ public partial class MainWindow : Window
 
         SetRunning(true);
         _cts = new CancellationTokenSource();
-        var log = new Progress<string>(Log);
+        IProgress<string> log = new Progress<string>(Log);
         try
         {
             await using var maker = await CbzMaker.StartAsync(chkShow.IsChecked == true, log);
             var all = await maker.FindChaptersAsync(listUrl, log, _cts.Token);
             if (all.Count == 0)
             {
-                Log(T("Log.ListNone"));
+                log.Report(T("Log.ListNone"));
                 return;
             }
 
             var chosen = all.Where(c => (from is null || c.Number >= from) && (to is null || c.Number <= to)).ToList();
-            Log(T("Log.ListFound", all.Count, Format(all[0].Number), Format(all[^1].Number)));
+            log.Report(T("Log.ListFound", all.Count, Format(all[0].Number), Format(all[^1].Number)));
             if (chosen.Count == 0)
             {
-                Log(T("Log.ListNoneInRange", T("Main.From"), T("Main.To")));
+                log.Report(T("Log.ListNoneInRange", T("Main.From"), T("Main.To")));
                 return;
             }
 
             _found = chosen.ToDictionary(c => c.Url);
             txtUrls.Text = string.Join(Environment.NewLine, chosen.Select(c => c.Url));
-            Log(T("Log.ListInserted", chosen.Count, Format(chosen[0].Number), Format(chosen[^1].Number), btnStart.Content));
-            Log("");
+            log.Report(T("Log.ListInserted", chosen.Count, Format(chosen[0].Number), Format(chosen[^1].Number), btnStart.Content));
+            log.Report("");
         }
         catch (SecurityCheckException ex)
         {
-            Log($"⚠ {ex.Message}");
+            log.Report($"⚠ {ex.Message}");
             chkShow.IsChecked = true;
-            Log("⚠ " + T("Log.AntiBotRetry", T("Main.ShowBrowserShort"), T("Main.Find")));
+            log.Report("⚠ " + T("Log.AntiBotRetry", T("Main.ShowBrowserShort"), T("Main.Find")));
         }
         catch (OperationCanceledException)
         {
@@ -242,7 +246,7 @@ public partial class MainWindow : Window
 
         SetRunning(true);
         _cts = new CancellationTokenSource();
-        var log = new Progress<string>(Log);
+        IProgress<string> log = new Progress<string>(Log);
         bool antiBot = false;
         try
         {
@@ -254,7 +258,7 @@ public partial class MainWindow : Window
             {
                 // Basta premere di nuovo il pulsante: il browser visibile è già selezionato
                 chkShow.IsChecked = true;
-                Log("⚠ " + T("Log.AntiBotRetry", T("Main.ShowBrowserShort"), btnStart.Content));
+                log.Report("⚠ " + T("Log.AntiBotRetry", T("Main.ShowBrowserShort"), btnStart.Content));
             }
         }
         catch (OperationCanceledException)
@@ -313,7 +317,7 @@ public partial class MainWindow : Window
             files[i] = epub;
         });
         _lastFile = files.LastOrDefault(f => f is not null) ?? _lastFile;
-        Log(T("Log.Done", files.Count(f => f is not null), job.Urls.Count));
+        log.Report(T("Log.Done", files.Count(f => f is not null), job.Urls.Count));
         return errors.Any(e => e is SecurityCheckException);
     }
 
@@ -352,7 +356,7 @@ public partial class MainWindow : Window
             return errors;
         }
 
-        Log(T("Log.Parallel", job.Parallel));
+        log.Report(T("Log.Parallel", job.Parallel));
         // Il primo capitolo da solo: un'eventuale verifica anti-bot si fa una volta e la sessione,
         // condivisa, la ricorda per gli altri. Se il sito blocca il browser nascosto, inutile proseguire.
         await Run(0);
@@ -369,7 +373,7 @@ public partial class MainWindow : Window
             try { await Run(i); }
             finally { gate.Release(); }
         }));
-        Log("");
+        log.Report("");
         return errors;
     }
 
@@ -404,7 +408,7 @@ public partial class MainWindow : Window
 
             if (chapters.Count == 0)
             {
-                Log(T("Log.VolumeNoChapters"));
+                log.Report(T("Log.VolumeNoChapters"));
                 return antiBot;
             }
             if (failed.Count > 0)
@@ -416,22 +420,22 @@ public partial class MainWindow : Window
                     T("Volume.CreateAnyway"), T("Common.Cancel"));
                 if (!go)
                 {
-                    Log(T("Log.VolumeNotCreated"));
+                    log.Report(T("Log.VolumeNotCreated"));
                     return antiBot;
                 }
-                Log(T("Log.VolumeWithout", string.Join(", ", failed)));
+                log.Report(T("Log.VolumeWithout", string.Join(", ", failed)));
             }
 
-            Log(T("Log.Merging", chapters.Count));
+            log.Report(T("Log.Merging", chapters.Count));
             if (job.Book is { } book)
             {
                 _lastFile = await Task.Run(() => EpubMaker.CreateVolume(book, chapters, job.VolumeNumber, job.Folder, job.BaseName));
-                Log(T("Log.VolumeCreated", _lastFile));
+                log.Report(T("Log.VolumeCreated", _lastFile));
                 if (job.KeepCbz)
                 {
                     // Stesso nome del volume EPUB, senza estensione (.epub o .kepub.epub)
                     string name = Path.GetFileName(_lastFile)[..^book.Extension.Length];
-                    Log(T("Log.Kept", await Task.Run(() => CbzMaker.MergeCbz(chapters.Select(c => c.CbzPath), job.Folder, name))));
+                    log.Report(T("Log.Kept", await Task.Run(() => CbzMaker.MergeCbz(chapters.Select(c => c.CbzPath), job.Folder, name))));
                 }
             }
             else
@@ -439,9 +443,9 @@ public partial class MainWindow : Window
                 string name = job.BaseName ?? T("Volume.CbzName", SeriesFromTitle(Path.GetFileNameWithoutExtension(chapters[0].CbzPath)),
                     EpubMaker.PadNumber(chapters[0].Number), EpubMaker.PadNumber(chapters[^1].Number));
                 _lastFile = await Task.Run(() => CbzMaker.MergeCbz(chapters.Select(c => c.CbzPath), job.Folder, name));
-                Log(T("Log.VolumeCreated", _lastFile));
+                log.Report(T("Log.VolumeCreated", _lastFile));
             }
-            Log(T("Log.VolumeDone", chapters.Count));
+            log.Report(T("Log.VolumeDone", chapters.Count));
             return antiBot;
         }
         finally

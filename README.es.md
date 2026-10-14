@@ -36,7 +36,7 @@
 - 📋 **Desde la lista de capítulos**: pega la página que enumera los capítulos de una serie, elige del/al y las direcciones se rellenan solas.
 - 📦 **Varios capítulos seguidos**: una dirección por línea, un archivo por capítulo, o...
 - 📕 **...un solo tomo**: todos los capítulos en un único archivo, con índice para saltar de un capítulo a otro.
-- ⚡ **Varios capítulos en paralelo**: hasta 6 capítulos a la vez, aproximadamente el doble de rápido; si el sitio tiene un fallo momentáneo, el capítulo se reintenta solo.
+- ⚡ **Varios capítulos en paralelo**: hasta 8 capítulos a la vez, aproximadamente el doble de rápido; si el sitio tiene un fallo momentáneo, el capítulo se reintenta solo.
 - 📚 **EPUB con los datos de la serie**: título, serie, número de capítulo, autor y sinopsis aparecen en la biblioteca de tu lector. Con un clic, optimizado para **Kobo**.
 - 🖼️ **Imágenes originales**: sin recompresión, la calidad es la misma que en el sitio.
 - 🛡️ **Sin publicidad**: las ventanas emergentes y las pestañas nuevas se cierran, y la página no puede llevarte a otros sitios.

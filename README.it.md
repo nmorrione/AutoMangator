@@ -36,7 +36,7 @@
 - 📋 **Dalla lista dei capitoli**: incolla la pagina che elenca i capitoli di una serie, scegli dal/al e gli indirizzi si compilano da soli.
 - 📦 **Più capitoli in coda**: un indirizzo per riga, un file per capitolo, oppure...
 - 📕 **...un unico volume**: tutti i capitoli in un solo file, con l'indice per saltare da un capitolo all'altro.
-- ⚡ **Più capitoli in parallelo**: fino a 6 capitoli insieme, circa il doppio più veloce; se il sito ha un intoppo momentaneo, il capitolo viene riprovato da solo.
+- ⚡ **Più capitoli in parallelo**: fino a 8 capitoli insieme, circa il doppio più veloce; se il sito ha un intoppo momentaneo, il capitolo viene riprovato da solo.
 - 📚 **EPUB con i dati della serie**: titolo, serie, numero del capitolo, autore e trama compaiono nella libreria dell'ebook reader. Con un clic, ottimizzato per **Kobo**.
 - 🖼️ **Immagini originali**: nessuna ricompressione, la qualità resta quella del sito.
 - 🛡️ **Niente pubblicità**: popup e nuove schede vengono chiusi, e la pagina non può essere portata su altri siti.
