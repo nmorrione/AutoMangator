@@ -79,6 +79,14 @@
       <CheckBox x:Name="chkReader">
         <TextBlock Text="{local:Tr Main.Reader}" TextWrapping="Wrap" />
       </CheckBox>
+      <WrapPanel Orientation="Horizontal" ItemSpacing="10" LineSpacing="4" ToolTip.Tip="{local:Tr Main.ParallelTip}">
+        <CheckBox x:Name="chkParallel" Content="{local:Tr Main.Parallel}" IsCheckedChanged="chkParallel_IsCheckedChanged" />
+        <StackPanel Orientation="Horizontal" Spacing="8">
+          <NumericUpDown x:Name="numParallel" Width="110" Minimum="2" Maximum="6" Increment="1" Value="3" FormatString="0"
+                         IsEnabled="False" />
+          <TextBlock VerticalAlignment="Center" Text="{local:Tr Main.ParallelUnit}" />
+        </StackPanel>
+      </WrapPanel>
     </StackPanel>
 
     <!-- Opzioni aggiuntive: EPUB con i dati della serie al posto del semplice .cbz -->

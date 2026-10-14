@@ -36,6 +36,7 @@
 - 📋 **Desde la lista de capítulos**: pega la página que enumera los capítulos de una serie, elige del/al y las direcciones se rellenan solas.
 - 📦 **Varios capítulos seguidos**: una dirección por línea, un archivo por capítulo, o...
 - 📕 **...un solo tomo**: todos los capítulos en un único archivo, con índice para saltar de un capítulo a otro.
+- ⚡ **Varios capítulos en paralelo**: hasta 6 capítulos a la vez, aproximadamente el doble de rápido; si el sitio tiene un fallo momentáneo, el capítulo se reintenta solo.
 - 📚 **EPUB con los datos de la serie**: título, serie, número de capítulo, autor y sinopsis aparecen en la biblioteca de tu lector. Con un clic, optimizado para **Kobo**.
 - 🖼️ **Imágenes originales**: sin recompresión, la calidad es la misma que en el sitio.
 - 🛡️ **Sin publicidad**: las ventanas emergentes y las pestañas nuevas se cierran, y la página no puede llevarte a otros sitios.
@@ -78,6 +79,7 @@ Normalmente **nada**: Web2Comic entiende solo si la página muestra el capítulo
 | **Crear EPUB** | Quieres EPUB con los datos de la serie en lugar del simple `.cbz`. |
 | **Optimizado para Kobo** | Lees los EPUB en un Kobo. |
 | **Crear un solo tomo** | Quieres todos los capítulos en un único archivo en lugar de uno por capítulo. |
+| **Descargar varios capítulos en paralelo** | Descargas muchos capítulos y quieres terminar antes (3 a la vez es un buen valor; si el sitio empieza a dar errores, bájalo). |
 
 ¿Ya tienes una carpeta llena de `.cbz`? El botón **Convertir CBZ a EPUB...** los convierte todos de una vez, sin descargar nada, con una tabla para corregir números y títulos de los capítulos.
 

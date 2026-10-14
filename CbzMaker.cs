@@ -8,13 +8,21 @@ namespace Web2Comic;
 /// <summary>
 /// Apre pagine web con Playwright (Edge su Windows, WebKit altrove), raccoglie le immagini
 /// nell'ordine in cui compaiono e le salva in un file .cbz (zip senza compressione).
-/// Un'istanza tiene aperto il browser, così più pagine riusano lo stesso.
+/// Un'istanza tiene aperto il browser con un'unica sessione (cookie condivisi): ogni capitolo
+/// si apre in una sua scheda, quindi più capitoli possono essere scaricati in parallelo e una
+/// verifica anti-bot superata vale per tutti.
 /// </summary>
 public sealed partial class CbzMaker : IAsyncDisposable
 {
     private readonly IPlaywright _playwright;
     private readonly IBrowser _browser;
     private readonly bool _headless;
+    private readonly SemaphoreSlim _contextLock = new(1, 1);
+    private IBrowserContext? _context;
+
+    // Nomi dei file che i capitoli in corso stanno per scrivere: due capitoli con lo stesso titolo
+    // scaricati insieme non devono scegliere lo stesso nome
+    private static readonly HashSet<string> ReservedPaths = new(StringComparer.OrdinalIgnoreCase);
 
     private CbzMaker(IPlaywright playwright, IBrowser browser, bool headless)
     {
@@ -66,7 +74,32 @@ public sealed partial class CbzMaker : IAsyncDisposable
     public async Task<string> CreateAsync(string url, string outputFolder, string? fileName, int minSide,
         IProgress<string> log, CancellationToken ct, bool forceReader = false)
     {
-        await using var context = await _browser.NewContextAsync(new() { ViewportSize = new() { Width = 1280, Height = 1000 } });
+        // Alcuni siti ogni tanto rispondono con una pagina d'errore o non rispondono in tempo:
+        // si riprova qualche volta prima di arrendersi. Non per i capitoli davvero non disponibili
+        // né per le verifiche anti-bot, dove ricaricare non serve.
+        const int attempts = 3;
+        for (int attempt = 1; ; attempt++)
+        {
+            try
+            {
+                return await CreateOnceAsync(url, outputFolder, fileName, minSide, log, ct, forceReader);
+            }
+            catch (Exception ex) when (attempt < attempts && !ct.IsCancellationRequested
+                && ex is NoImagesException or TimeoutException or PlaywrightException)
+            {
+                log.Report(T("Engine.Retry", attempt + 1, attempts));
+                await Task.Delay(TimeSpan.FromSeconds(3 * attempt), ct);
+            }
+        }
+    }
+
+    /// <summary>Nessuna immagine nella pagina: spesso un errore momentaneo del sito, si può riprovare.</summary>
+    private sealed class NoImagesException(string message) : InvalidOperationException(message);
+
+    private async Task<string> CreateOnceAsync(string url, string outputFolder, string? fileName, int minSide,
+        IProgress<string> log, CancellationToken ct, bool forceReader)
+    {
+        var context = await ContextAsync();
         var page = await context.NewPageAsync();
 
         // Annullare chiude la pagina: le chiamate Playwright in corso falliscono subito
@@ -79,6 +112,30 @@ public sealed partial class CbzMaker : IAsyncDisposable
         {
             throw new OperationCanceledException(ct);
         }
+        finally
+        {
+            try { await page.CloseAsync(); } catch (PlaywrightException) { }
+        }
+    }
+
+    /// <summary>La sessione del browser condivisa da tutti i capitoli, creata al primo uso.</summary>
+    private async Task<IBrowserContext> ContextAsync()
+    {
+        await _contextLock.WaitAsync();
+        try
+        {
+            if (_context is null)
+            {
+                _context = await _browser.NewContextAsync(new() { ViewportSize = new() { Width = 1280, Height = 1000 } });
+                // window.open disattivato in tutte le pagine e in tutti i frame (pubblicità)
+                await _context.AddInitScriptAsync("window.open = function () { return null; };");
+            }
+            return _context;
+        }
+        finally
+        {
+            _contextLock.Release();
+        }
     }
 
     private static async Task<string> CreateCoreAsync(IPage page, IBrowserContext context, string url,
@@ -87,7 +144,7 @@ public sealed partial class CbzMaker : IAsyncDisposable
         // Tiene da parte le immagini scaricate dal browser, così non vanno riscaricate
         var responses = new ConcurrentDictionary<string, IResponse>();
         page.Response += (_, r) => { if (r.Request.ResourceType == "image") responses[r.Url] = r; };
-        var guard = await ProtectAsync(context, page, url);
+        var guard = await ProtectAsync(page, url);
 
         log.Report(T("Engine.Opening", url));
         await page.GotoAsync(url, new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
@@ -118,7 +175,7 @@ public sealed partial class CbzMaker : IAsyncDisposable
         }
 
         if (srcs.Length == 0)
-            throw new InvalidOperationException(T("Engine.NoImages"));
+            throw new NoImagesException(T("Engine.NoImages"));
         // Una sola immagine orizzontale: di solito è l'avviso "capitolo non disponibile" del sito, non una pagina
         if (srcs.Length == 1 && await page.EvaluateAsync<bool>(@"src => {
                 const i = [...document.images].find(x => (x.currentSrc || x.src) === src);
@@ -133,7 +190,7 @@ public sealed partial class CbzMaker : IAsyncDisposable
             fileName = string.IsNullOrWhiteSpace(title) ? new Uri(url).Host : title;
         }
         Directory.CreateDirectory(outputFolder);
-        string outPath = UniquePath(Path.Combine(outputFolder, SafeFileName(fileName) + ".cbz"));
+        string outPath = ReservePath(Path.Combine(outputFolder, SafeFileName(fileName) + ".cbz"));
 
         // Scrive su un file temporaneo: se qualcosa va storto non resta un .cbz a metà
         string tmpPath = outPath + ".part";
@@ -154,16 +211,30 @@ public sealed partial class CbzMaker : IAsyncDisposable
                     s.Write(data);
                     log.Report($"  {n:D3}  {data.Length / 1024,6} KB");
                 }
-                if (n == 0) throw new InvalidOperationException(T("Engine.NoValidImages"));
+                if (n == 0) throw new NoImagesException(T("Engine.NoValidImages"));
             }
             File.Move(tmpPath, outPath);
         }
         finally
         {
             if (File.Exists(tmpPath)) File.Delete(tmpPath);
+            lock (ReservedPaths) ReservedPaths.Remove(outPath);
         }
 
         return outPath;
+    }
+
+    // Come UniquePath, ma tiene conto anche dei nomi scelti dai capitoli in corso, e prenota quello scelto
+    private static string ReservePath(string path)
+    {
+        lock (ReservedPaths)
+        {
+            string dir = Path.GetDirectoryName(path)!, name = Path.GetFileNameWithoutExtension(path), ext = Path.GetExtension(path);
+            for (int i = 2; File.Exists(path) || ReservedPaths.Contains(path); i++)
+                path = Path.Combine(dir, $"{name} ({i}){ext}");
+            ReservedPaths.Add(path);
+            return path;
+        }
     }
 
     // Scorre fino in fondo (anche se la pagina si allunga caricando altro), per far partire il lazy-loading
@@ -260,7 +331,10 @@ public sealed partial class CbzMaker : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
+        if (_context is not null)
+            try { await _context.DisposeAsync(); } catch (PlaywrightException) { }
         await _browser.DisposeAsync();
         _playwright.Dispose();
+        _contextLock.Dispose();
     }
 }

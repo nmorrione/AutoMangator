@@ -62,13 +62,14 @@ public sealed partial class CbzMaker
     }
 
     /// <summary>Niente popup, nuove schede o navigazioni verso altri siti (pubblicità).</summary>
-    private static async Task<NavigationGuard> ProtectAsync(IBrowserContext context, IPage page, string url)
+    private static async Task<NavigationGuard> ProtectAsync(IPage page, string url)
     {
         var guard = new NavigationGuard(url);
 
-        // window.open disattivato in tutti i frame; le schede che si aprissero comunque vengono chiuse
-        await context.AddInitScriptAsync("window.open = function () { return null; };");
-        context.Page += (_, p) => { if (p != page) _ = p.CloseAsync(); };
+        // window.open è già disattivato nella sessione (vedi ContextAsync); le schede che la pagina
+        // aprisse comunque vengono chiuse. Solo quelle aperte da lei: le altre schede sono gli altri
+        // capitoli scaricati in parallelo.
+        page.Popup += (_, popup) => _ = popup.CloseAsync();
 
         await page.RouteAsync("**/*", async route =>
         {

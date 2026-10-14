@@ -16,12 +16,12 @@ public sealed partial class CbzMaker
     /// <summary>Apre la pagina della lista e restituisce i capitoli trovati, in ordine di numero.</summary>
     public async Task<List<FoundChapter>> FindChaptersAsync(string listUrl, IProgress<string> log, CancellationToken ct)
     {
-        await using var context = await _browser.NewContextAsync(new() { ViewportSize = new() { Width = 1280, Height = 1000 } });
-        var page = await context.NewPageAsync();
+        // Stessa sessione dei capitoli: se la lista chiede una verifica anti-bot, vale anche per loro
+        var page = await (await ContextAsync()).NewPageAsync();
         using var reg = ct.Register(() => _ = page.CloseAsync());
         try
         {
-            var guard = await ProtectAsync(context, page, listUrl);
+            var guard = await ProtectAsync(page, listUrl);
             log.Report(T("Engine.OpeningList", listUrl));
             await page.GotoAsync(listUrl, new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
             await WaitForSecurityCheckAsync(page, _headless, log, ct);
@@ -38,6 +38,10 @@ public sealed partial class CbzMaker
         catch (PlaywrightException) when (ct.IsCancellationRequested)
         {
             throw new OperationCanceledException(ct);
+        }
+        finally
+        {
+            try { await page.CloseAsync(); } catch (PlaywrightException) { }
         }
     }
 

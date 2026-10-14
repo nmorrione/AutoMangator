@@ -91,6 +91,9 @@ public partial class MainWindow : Window
         FitHeight();
     }
 
+    private void chkParallel_IsCheckedChanged(object? sender, RoutedEventArgs e) =>
+        numParallel.IsEnabled = chkParallel.IsChecked == true;
+
     private void chkVolume_IsCheckedChanged(object? sender, RoutedEventArgs e)
     {
         pnlVolumeNumber.IsVisible = chkVolume.IsChecked == true;
@@ -222,6 +225,7 @@ public partial class MainWindow : Window
             KeepCbz = chkKeepCbz.IsChecked == true,
             Volume = chkVolume.IsChecked == true,
             VolumeNumber = string.IsNullOrWhiteSpace(txtVolume.Text) ? null : txtVolume.Text.Trim(),
+            Parallel = chkParallel.IsChecked == true ? (int)(numParallel.Value ?? 3) : 1,
         };
 
         // Opzioni EPUB: dati della serie e numero del primo capitolo
@@ -282,48 +286,98 @@ public partial class MainWindow : Window
         public string? VolumeNumber { get; init; }
         public BookInfo? Book { get; set; }
         public double? FirstChapter;
+        /// <summary>Quanti capitoli scaricare insieme (1 = uno alla volta).</summary>
+        public int Parallel { get; init; } = 1;
     }
 
     // Un file per capitolo (.cbz, oppure .epub / .kepub.epub). Restituisce true se un sito ha chiesto la verifica anti-bot.
     private async Task<bool> CreateChaptersAsync(CbzMaker maker, Job job, IProgress<string> log, CancellationToken ct)
     {
-        int ok = 0;
-        bool antiBot = false;
-        for (int i = 0; i < job.Urls.Count; i++)
+        var files = new string?[job.Urls.Count];
+        var errors = await ForEachChapterAsync(job, log, ct, async (i, chapterLog) =>
         {
             // Con più indirizzi il nome scelto riceve un numero progressivo
             string? name = job.BaseName is null ? null : job.Urls.Count == 1 ? job.BaseName : $"{job.BaseName} {i + 1:D2}";
+            string cbz = await maker.CreateAsync(job.Urls[i], job.Folder, name, job.MinSide, chapterLog, ct, job.ForceReader);
+            if (job.Book is not { } book)
+            {
+                chapterLog.Report(T("Log.Created", cbz));
+                files[i] = cbz;
+                return;
+            }
+            var chapter = Chapter(job, i, cbz);
+            string epub = await Task.Run(() => EpubMaker.Create(book, chapter, job.Folder));
+            chapterLog.Report(T("Log.ChapterCreated", chapter.Number, epub));
+            if (job.KeepCbz) chapterLog.Report(T("Log.Kept", cbz));
+            else File.Delete(cbz);
+            files[i] = epub;
+        });
+        _lastFile = files.LastOrDefault(f => f is not null) ?? _lastFile;
+        Log(T("Log.Done", files.Count(f => f is not null), job.Urls.Count));
+        return errors.Any(e => e is SecurityCheckException);
+    }
+
+    /// <summary>
+    /// Esegue <paramref name="work"/> per ogni capitolo: uno alla volta, oppure in parallelo fino a
+    /// <see cref="Job.Parallel"/> capitoli insieme. Restituisce l'errore di ogni capitolo (null se è andato bene).
+    /// L'ordine dei risultati resta quello degli indirizzi, qualunque sia l'ordine in cui i capitoli finiscono.
+    /// </summary>
+    private async Task<Exception?[]> ForEachChapterAsync(Job job, IProgress<string> log, CancellationToken ct,
+        Func<int, IProgress<string>, Task> work)
+    {
+        int n = job.Urls.Count;
+        bool parallel = job.Parallel > 1 && n > 1;
+        var errors = new Exception?[n];
+
+        async Task Run(int i)
+        {
+            // In parallelo le righe dei capitoli si mescolano: ognuna porta il suo [numero/totale]
+            IProgress<string> chapterLog = parallel ? new PrefixedLog(log, $"[{i + 1}/{n}] ") : log;
+            if (!parallel && n > 1) log.Report(T("Log.ChapterOf", i + 1, n));
             try
             {
-                _lastFile = await maker.CreateAsync(job.Urls[i], job.Folder, name, job.MinSide, log, ct, job.ForceReader);
-                if (job.Book is not { } book)
-                {
-                    Log(T("Log.Created", _lastFile));
-                }
-                else
-                {
-                    var chapter = Chapter(job, i, _lastFile);
-                    string cbz = _lastFile;
-                    _lastFile = await Task.Run(() => EpubMaker.Create(book, chapter, job.Folder));
-                    Log(T("Log.ChapterCreated", chapter.Number, _lastFile));
-                    if (job.KeepCbz) Log(T("Log.Kept", cbz));
-                    else File.Delete(cbz);
-                }
-                ok++;
-            }
-            catch (SecurityCheckException ex)
-            {
-                Log($"⚠ {ex.Message}");
-                antiBot = true;
+                await work(i, chapterLog);
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
-                Log(T("Log.Error", ex.Message));
+                errors[i] = ex;
+                chapterLog.Report(ex is SecurityCheckException ? $"⚠ {ex.Message}" : T("Log.Error", ex.Message));
             }
-            Log("");
+            if (!parallel) log.Report("");
         }
-        Log(T("Log.Done", ok, job.Urls.Count));
-        return antiBot;
+
+        if (!parallel)
+        {
+            for (int i = 0; i < n; i++) await Run(i);
+            return errors;
+        }
+
+        Log(T("Log.Parallel", job.Parallel));
+        // Il primo capitolo da solo: un'eventuale verifica anti-bot si fa una volta e la sessione,
+        // condivisa, la ricorda per gli altri. Se il sito blocca il browser nascosto, inutile proseguire.
+        await Run(0);
+        if (errors[0] is SecurityCheckException blocked)
+        {
+            for (int i = 1; i < n; i++) errors[i] = blocked;
+            return errors;
+        }
+
+        using var gate = new SemaphoreSlim(job.Parallel);
+        await Task.WhenAll(Enumerable.Range(1, n - 1).Select(async i =>
+        {
+            await gate.WaitAsync(ct);
+            try { await Run(i); }
+            finally { gate.Release(); }
+        }));
+        Log("");
+        return errors;
+    }
+
+    /// <summary>Aggiunge un prefisso a ogni riga del log (es. "[3/10] ").</summary>
+    private sealed class PrefixedLog(IProgress<string> inner, string prefix) : IProgress<string>
+    {
+        public void Report(string value) =>
+            inner.Report(string.Join("\n", value.Split('\n').Select(line => line.Length == 0 ? line : prefix + line)));
     }
 
     // Tutti i capitoli in un unico file. Ogni capitolo viene prima scaricato in una cartella temporanea.
@@ -335,22 +389,18 @@ public partial class MainWindow : Window
         bool antiBot = false;
         try
         {
+            var cbzs = new string?[job.Urls.Count];
+            var errors = await ForEachChapterAsync(job, log, ct, async (i, chapterLog) =>
+                cbzs[i] = await maker.CreateAsync(job.Urls[i], temp, null, job.MinSide, chapterLog, ct, job.ForceReader));
+            // Nell'ordine degli indirizzi, qualunque sia l'ordine in cui sono finiti
             for (int i = 0; i < job.Urls.Count; i++)
             {
-                Log(T("Log.ChapterOf", i + 1, job.Urls.Count));
-                try
-                {
-                    string cbz = await maker.CreateAsync(job.Urls[i], temp, null, job.MinSide, log, ct, job.ForceReader);
+                if (cbzs[i] is { } cbz)
                     chapters.Add(Chapter(job, i, cbz));
-                }
-                catch (Exception ex) when (ex is not OperationCanceledException)
-                {
-                    Log(ex is SecurityCheckException ? $"⚠ {ex.Message}" : T("Log.Error", ex.Message));
-                    antiBot |= ex is SecurityCheckException;
+                else
                     failed.Add(_found.TryGetValue(job.Urls[i], out var f) ? T("Common.ChapterN", Format(f.Number)) : job.Urls[i]);
-                }
-                Log("");
             }
+            antiBot = errors.Any(e => e is SecurityCheckException);
 
             if (chapters.Count == 0)
             {
@@ -471,7 +521,8 @@ public partial class MainWindow : Window
         txtUrls.IsReadOnly = txtName.IsReadOnly = txtFolder.IsReadOnly = running;
         txtListUrl.IsReadOnly = txtFrom.IsReadOnly = txtTo.IsReadOnly = running;
         btnBrowse.IsEnabled = numMin.IsEnabled = chkShow.IsEnabled = chkReader.IsEnabled = btnConvert.IsEnabled = !running;
-        chkEpub.IsEnabled = pnlEpub.IsEnabled = chkVolume.IsEnabled = !running;
+        chkEpub.IsEnabled = pnlEpub.IsEnabled = chkVolume.IsEnabled = chkParallel.IsEnabled = !running;
+        numParallel.IsEnabled = !running && chkParallel.IsChecked == true;
         progress.IsIndeterminate = running;
     }
 
