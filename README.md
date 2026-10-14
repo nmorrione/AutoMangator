@@ -18,6 +18,18 @@ Le versioni pronte sono nelle [Release](https://github.com/nmorrione/AutoMangato
 3. Prende le immagini nell'ordine in cui compaiono, scartando quelle piccole (loghi, icone, banner) e i formati non adatti (SVG).
 4. Le salva in uno zip **senza compressione**, con nomi `001.jpg`, `002.png`, … ed estensione `.cbz`.
 
+### Reader a una pagina per volta
+Alcuni siti non mostrano tutto il capitolo ma un reader con una pagina alla volta. L'app se ne accorge da sola
+e lo **sfoglia** come farebbe una persona (freccia destra o pulsante "pagina successiva"), raccogliendo le pagine
+in ordine finché il capitolo finisce. Se un reader non viene riconosciuto, spunta **Sfoglia il reader pagina per
+pagina**: in quel caso prova anche il clic sul lato destro della pagina.
+
+Durante il download popup e nuove schede vengono chiusi, e la pagina non può essere portata su altri siti
+(pubblicità) né, mentre si sfoglia un reader, fuori dal capitolo.
+
+Se un sito mostra una **verifica di sicurezza** anti-bot (es. Cloudflare), spunta **Mostra il browser**:
+se la verifica compare nella finestra completala tu, e il download prosegue da solo.
+
 ## Uso
 - **Indirizzi**: uno per riga; ogni indirizzo diventa un file .cbz.
 - **Nome file**: opzionale; vuoto = titolo della pagina. Con più indirizzi viene numerato.
@@ -43,7 +55,8 @@ aumenta di 1 per ciascuno) oppure lasciare vuoto per prenderlo dal titolo della 
 se si spunta **Conserva anche il file .cbz**.
 
 ## Da terminale
-- `AutoMangator --cli <indirizzo> [cartella]`: crea il `.cbz` senza aprire la finestra.
+- `AutoMangator --cli <indirizzo> [cartella] [--reader] [--show]`: crea il `.cbz` senza aprire la finestra
+  (`--reader` forza lo sfoglio del reader, `--show` mostra il browser).
 - `AutoMangator --epub <cartella> <serie> [autore]`: crea gli EPUB per Kobo dai `.cbz` della cartella.
 
 ## Compilare

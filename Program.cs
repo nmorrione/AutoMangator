@@ -8,8 +8,15 @@ internal static class Program
     private static int Main(string[] args)
     {
         // Senza finestra: AutoMangator --cli <url> [cartella]  (usato anche dai test su GitHub Actions)
+        // Opzioni in fondo: --reader sfoglia la pagina come un reader anche se non viene riconosciuto,
+        // --show mostra il browser (per i siti con verifica di sicurezza)
         if (args is ["--cli", var url, ..])
-            return RunCliAsync(url, args.Length > 2 ? args[2] : DefaultOutputFolder).GetAwaiter().GetResult();
+        {
+            string[] flags = ["--reader", "--show"];
+            var rest = args.Skip(2).Where(a => !flags.Contains(a)).ToArray();
+            return RunCliAsync(url, rest.Length > 0 ? rest[0] : DefaultOutputFolder,
+                args.Contains("--reader"), args.Contains("--show")).GetAwaiter().GetResult();
+        }
         // AutoMangator --epub <cartella con i .cbz> <serie> [autore]
         if (args is ["--epub", var folder, var series, ..])
             return RunEpubCli(folder, new BookInfo { Series = series, Writer = args.Length > 3 ? args[3] : "" });
@@ -24,13 +31,13 @@ internal static class Program
     public static string DefaultOutputFolder =>
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
 
-    private static async Task<int> RunCliAsync(string url, string folder)
+    private static async Task<int> RunCliAsync(string url, string folder, bool forceReader, bool showBrowser)
     {
         var log = new ConsoleLog();
         try
         {
-            await using var maker = await CbzMaker.StartAsync(showBrowser: false, log);
-            string file = await maker.CreateAsync(url, folder, null, 300, log, CancellationToken.None);
+            await using var maker = await CbzMaker.StartAsync(showBrowser, log);
+            string file = await maker.CreateAsync(url, folder, null, 300, log, CancellationToken.None, forceReader);
             Console.WriteLine($"Creato {file}");
             return 0;
         }

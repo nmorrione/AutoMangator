@@ -22,10 +22,14 @@
       <Button Grid.Column="1" x:Name="btnBrowse" Content="Sfoglia..." Click="btnBrowse_Click" />
     </Grid>
 
-    <StackPanel Grid.Row="6" Margin="0,8,0,0" Orientation="Horizontal" Spacing="10">
-      <TextBlock VerticalAlignment="Center" Text="Lato minimo immagine (px):" />
-      <NumericUpDown x:Name="numMin" Width="130" Minimum="0" Maximum="5000" Increment="50" Value="300" FormatString="0" />
-      <CheckBox x:Name="chkShow" Content="Mostra il browser (se il sito blocca o chiede una verifica)" />
+    <StackPanel Grid.Row="6" Margin="0,8,0,0" Spacing="4">
+      <StackPanel Orientation="Horizontal" Spacing="10">
+        <TextBlock VerticalAlignment="Center" Text="Lato minimo immagine (px):" />
+        <NumericUpDown x:Name="numMin" Width="130" Minimum="0" Maximum="5000" Increment="50" Value="300" FormatString="0" />
+        <CheckBox x:Name="chkShow" Content="Mostra il browser (se il sito blocca o chiede una verifica)" />
+      </StackPanel>
+      <CheckBox x:Name="chkReader"
+                Content="Sfoglia il reader pagina per pagina (se il sito mostra una pagina alla volta e non viene riconosciuto da solo)" />
     </StackPanel>
 
     <!-- Opzioni aggiuntive: EPUB per Kobo al posto del semplice .cbz -->

@@ -107,6 +107,7 @@ public partial class MainWindow : Window
         string folder = (txtFolder.Text ?? "").Trim();
         string? baseName = string.IsNullOrWhiteSpace(txtName.Text) ? null : txtName.Text.Trim();
         int minSide = (int)(numMin.Value ?? 300);
+        bool forceReader = chkReader.IsChecked == true;
 
         // Opzioni EPUB: dati della serie e numero del primo capitolo
         BookInfo? book = null;
@@ -141,7 +142,7 @@ public partial class MainWindow : Window
                 string? name = baseName is null ? null : urls.Count == 1 ? baseName : $"{baseName} {i + 1:D2}";
                 try
                 {
-                    _lastFile = await maker.CreateAsync(urls[i], folder, name, minSide, log, _cts.Token);
+                    _lastFile = await maker.CreateAsync(urls[i], folder, name, minSide, log, _cts.Token, forceReader);
                     if (book is null)
                     {
                         Log($"Creato {_lastFile}");
@@ -190,7 +191,7 @@ public partial class MainWindow : Window
         btnStart.IsEnabled = !running;
         btnCancel.IsEnabled = running;
         txtUrls.IsReadOnly = txtName.IsReadOnly = txtFolder.IsReadOnly = running;
-        btnBrowse.IsEnabled = numMin.IsEnabled = chkShow.IsEnabled = btnKobo.IsEnabled = !running;
+        btnBrowse.IsEnabled = numMin.IsEnabled = chkShow.IsEnabled = chkReader.IsEnabled = btnKobo.IsEnabled = !running;
         chkEpub.IsEnabled = pnlEpub.IsEnabled = !running;
         progress.IsIndeterminate = running;
     }

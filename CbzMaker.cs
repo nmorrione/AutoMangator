@@ -9,15 +9,17 @@ namespace AutoMangator;
 /// nell'ordine in cui compaiono e le salva in un file .cbz (zip senza compressione).
 /// Un'istanza tiene aperto il browser, così più pagine riusano lo stesso.
 /// </summary>
-public sealed class CbzMaker : IAsyncDisposable
+public sealed partial class CbzMaker : IAsyncDisposable
 {
     private readonly IPlaywright _playwright;
     private readonly IBrowser _browser;
+    private readonly bool _headless;
 
-    private CbzMaker(IPlaywright playwright, IBrowser browser)
+    private CbzMaker(IPlaywright playwright, IBrowser browser, bool headless)
     {
         _playwright = playwright;
         _browser = browser;
+        _headless = headless;
     }
 
     public static async Task<CbzMaker> StartAsync(bool showBrowser, IProgress<string> log)
@@ -37,7 +39,7 @@ public sealed class CbzMaker : IAsyncDisposable
             ? await playwright.Chromium.LaunchAsync(new() { Channel = "msedge", Headless = !showBrowser })
             // WebKit (il motore di Safari) di Playwright, scaricato al primo avvio
             : await playwright.Webkit.LaunchAsync(new() { Headless = !showBrowser });
-        return new CbzMaker(playwright, browser);
+        return new CbzMaker(playwright, browser, !showBrowser);
     }
 
     // Scarica WebKit se manca; se è già presente l'installer termina subito
@@ -59,8 +61,9 @@ public sealed class CbzMaker : IAsyncDisposable
 
     /// <summary>Crea il .cbz e restituisce il percorso del file creato.</summary>
     /// <param name="fileName">Nome del file senza estensione; null per usare il titolo della pagina.</param>
+    /// <param name="forceReader">Sfoglia la pagina come un reader anche se non viene riconosciuto da solo.</param>
     public async Task<string> CreateAsync(string url, string outputFolder, string? fileName, int minSide,
-        IProgress<string> log, CancellationToken ct)
+        IProgress<string> log, CancellationToken ct, bool forceReader = false)
     {
         await using var context = await _browser.NewContextAsync(new() { ViewportSize = new() { Width = 1280, Height = 1000 } });
         var page = await context.NewPageAsync();
@@ -69,7 +72,7 @@ public sealed class CbzMaker : IAsyncDisposable
         using var reg = ct.Register(() => _ = page.CloseAsync());
         try
         {
-            return await CreateCoreAsync(page, context, url, outputFolder, fileName, minSide, log, ct);
+            return await CreateCoreAsync(page, context, url, outputFolder, fileName, minSide, forceReader, _headless, log, ct);
         }
         catch (PlaywrightException) when (ct.IsCancellationRequested)
         {
@@ -78,14 +81,17 @@ public sealed class CbzMaker : IAsyncDisposable
     }
 
     private static async Task<string> CreateCoreAsync(IPage page, IBrowserContext context, string url,
-        string outputFolder, string? fileName, int minSide, IProgress<string> log, CancellationToken ct)
+        string outputFolder, string? fileName, int minSide, bool forceReader, bool headless, IProgress<string> log, CancellationToken ct)
     {
         // Tiene da parte le immagini scaricate dal browser, così non vanno riscaricate
         var responses = new ConcurrentDictionary<string, IResponse>();
         page.Response += (_, r) => { if (r.Request.ResourceType == "image") responses[r.Url] = r; };
+        var guard = await ProtectAsync(context, page, url);
 
         log.Report($"Apro {url} ...");
         await page.GotoAsync(url, new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
+        await WaitForSecurityCheckAsync(page, headless, log, ct);
+        guard.SiteLoaded(page.Url);
 
         log.Report("Scorro la pagina per caricare tutte le immagini...");
         await page.EvaluateAsync(@"async () => {
@@ -109,6 +115,13 @@ public sealed class CbzMaker : IAsyncDisposable
                 .filter(i => i.complete && i.naturalWidth >= min && i.naturalHeight >= min)
                 .map(i => i.currentSrc || i.src)
                 .filter(s => s && !s.startsWith('blob:')))]", minSide);
+
+        // Reader a una pagina per volta: le pagine si ottengono sfogliandolo
+        if (forceReader || await LooksLikeReaderAsync(page))
+        {
+            if (await ReadReaderAsync(page, guard, forceReader, log, ct) is { } pages)
+                srcs = pages;
+        }
 
         if (srcs.Length == 0)
             throw new InvalidOperationException("Nessuna immagine trovata (prova un lato minimo più basso o mostra il browser).");
