@@ -4,25 +4,36 @@
         x:Class="AutoMangator.MainWindow"
         Title="AutoMangator"
         Icon="avares://AutoMangator/Assets/icon.png"
-        Width="760" Height="640" MinWidth="600" MinHeight="520"
+        Width="760" Height="720" MinWidth="600" MinHeight="600"
         WindowStartupLocation="CenterScreen">
 
-  <Grid Margin="12" RowDefinitions="Auto,110,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,*" RowSpacing="4">
+  <Grid Margin="12" RowDefinitions="Auto,Auto,Auto,110,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,*" RowSpacing="4">
 
-    <TextBlock Grid.Row="0" Text="Indirizzi (uno per riga):" />
-    <TextBox Grid.Row="1" x:Name="txtUrls" AcceptsReturn="True" TextWrapping="NoWrap" />
+    <!-- Lista capitoli: ne ricava gli indirizzi e li mette in "Indirizzi" -->
+    <TextBlock Grid.Row="0" Text="Lista capitoli (facoltativo): la pagina del sito che elenca tutti i capitoli" />
+    <Grid Grid.Row="1" ColumnDefinitions="*,Auto,70,Auto,70,Auto" ColumnSpacing="6">
+      <TextBox x:Name="txtListUrl" PlaceholderText="https://..." />
+      <TextBlock Grid.Column="1" VerticalAlignment="Center" Text="dal" />
+      <TextBox Grid.Column="2" x:Name="txtFrom" PlaceholderText="primo" />
+      <TextBlock Grid.Column="3" VerticalAlignment="Center" Text="al" />
+      <TextBox Grid.Column="4" x:Name="txtTo" PlaceholderText="ultimo" />
+      <Button Grid.Column="5" x:Name="btnFind" Content="Trova capitoli" Click="btnFind_Click" />
+    </Grid>
 
-    <TextBlock Grid.Row="2" Margin="0,8,0,0"
-               Text="Nome file (opzionale; vuoto = titolo della pagina; con più indirizzi viene numerato):" />
-    <TextBox Grid.Row="3" x:Name="txtName" />
+    <TextBlock Grid.Row="2" Margin="0,8,0,0" Text="Indirizzi (uno per riga):" />
+    <TextBox Grid.Row="3" x:Name="txtUrls" AcceptsReturn="True" TextWrapping="NoWrap" />
 
-    <TextBlock Grid.Row="4" Margin="0,8,0,0" Text="Cartella di destinazione:" />
-    <Grid Grid.Row="5" ColumnDefinitions="*,Auto" ColumnSpacing="6">
+    <TextBlock Grid.Row="4" Margin="0,8,0,0"
+               Text="Nome file (opzionale; vuoto = titolo della pagina; con più indirizzi viene numerato; col volume è il nome del volume):" />
+    <TextBox Grid.Row="5" x:Name="txtName" />
+
+    <TextBlock Grid.Row="6" Margin="0,8,0,0" Text="Cartella di destinazione:" />
+    <Grid Grid.Row="7" ColumnDefinitions="*,Auto" ColumnSpacing="6">
       <TextBox x:Name="txtFolder" />
       <Button Grid.Column="1" x:Name="btnBrowse" Content="Sfoglia..." Click="btnBrowse_Click" />
     </Grid>
 
-    <StackPanel Grid.Row="6" Margin="0,8,0,0" Spacing="4">
+    <StackPanel Grid.Row="8" Margin="0,8,0,0" Spacing="4">
       <StackPanel Orientation="Horizontal" Spacing="10">
         <TextBlock VerticalAlignment="Center" Text="Lato minimo immagine (px):" />
         <NumericUpDown x:Name="numMin" Width="130" Minimum="0" Maximum="5000" Increment="50" Value="300" FormatString="0" />
@@ -33,9 +44,9 @@
     </StackPanel>
 
     <!-- Opzioni aggiuntive: EPUB per Kobo al posto del semplice .cbz -->
-    <CheckBox Grid.Row="7" Margin="0,4,0,0" x:Name="chkEpub" Content="Crea EPUB per Kobo (con i dati della serie)"
+    <CheckBox Grid.Row="9" Margin="0,4,0,0" x:Name="chkEpub" Content="Crea EPUB per Kobo (con i dati della serie)"
               IsCheckedChanged="chkEpub_IsCheckedChanged" />
-    <Border Grid.Row="8" x:Name="pnlEpub" IsVisible="False" Padding="10" CornerRadius="4" BorderThickness="1"
+    <Border Grid.Row="10" x:Name="pnlEpub" IsVisible="False" Padding="10" CornerRadius="4" BorderThickness="1"
             BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}">
       <StackPanel Spacing="8">
         <local:SeriesInfoPanel x:Name="series" />
@@ -43,22 +54,31 @@
           <TextBlock VerticalAlignment="Center" Text="Numero capitolo:" />
           <TextBox x:Name="txtChapter" Width="90" PlaceholderText="automatico" />
           <TextBlock VerticalAlignment="Center" Opacity="0.7"
-                     Text="vuoto = preso dal titolo della pagina; con più indirizzi aumenta di 1" />
+                     Text="vuoto = dalla lista o dal titolo della pagina; con più indirizzi aumenta di 1" />
+        </StackPanel>
+        <StackPanel x:Name="pnlVolumeNumber" Orientation="Horizontal" Spacing="10" IsVisible="False">
+          <TextBlock VerticalAlignment="Center" Text="Numero volume:" />
+          <TextBox x:Name="txtVolume" Width="90" PlaceholderText="facoltativo" />
+          <TextBlock VerticalAlignment="Center" Opacity="0.7"
+                     Text="sul Kobo: &quot;Serie Vol. 02&quot;; vuoto = &quot;Serie 001-010&quot;" />
         </StackPanel>
         <CheckBox x:Name="chkKeepCbz" Content="Conserva anche il file .cbz" />
       </StackPanel>
     </Border>
 
-    <StackPanel Grid.Row="9" Margin="0,8,0,0" Orientation="Horizontal" Spacing="8">
+    <CheckBox Grid.Row="11" x:Name="chkVolume" Content="Crea singolo volume (tutti i capitoli degli indirizzi in un solo file)"
+              IsCheckedChanged="chkVolume_IsCheckedChanged" />
+
+    <StackPanel Grid.Row="12" Margin="0,8,0,0" Orientation="Horizontal" Spacing="8">
       <Button x:Name="btnStart" Content="Crea CBZ" Classes="accent" MinWidth="120" Click="btnStart_Click" />
       <Button x:Name="btnCancel" Content="Annulla" MinWidth="100" IsEnabled="False" Click="btnCancel_Click" />
       <Button x:Name="btnOpenFolder" Content="Apri cartella" MinWidth="120" Click="btnOpenFolder_Click" />
       <Button x:Name="btnKobo" Content="EPUB per Kobo..." MinWidth="140" Click="btnKobo_Click" />
     </StackPanel>
 
-    <ProgressBar Grid.Row="10" x:Name="progress" Margin="0,6,0,0" />
+    <ProgressBar Grid.Row="13" x:Name="progress" Margin="0,6,0,0" />
 
-    <TextBox Grid.Row="11" MinHeight="120" x:Name="txtLog" IsReadOnly="True" AcceptsReturn="True" TextWrapping="NoWrap"
+    <TextBox Grid.Row="14" MinHeight="120" x:Name="txtLog" IsReadOnly="True" AcceptsReturn="True" TextWrapping="NoWrap"
              FontFamily="Cascadia Mono,Consolas,Menlo,monospace" FontSize="12" />
   </Grid>
 </Window>

@@ -29,7 +29,9 @@
 ## Cosa fa
 - 📖 **Capitolo intero in un file**: apre la pagina, la scorre fino in fondo e raccoglie le immagini nell'ordine giusto.
 - 🔁 **Funziona anche con i reader a una pagina per volta**: se ne accorge da solo e li sfoglia fino all'ultima pagina.
-- 📦 **Più capitoli in coda**: un indirizzo per riga, un file per capitolo.
+- 📋 **Dalla lista dei capitoli**: incolla la pagina che elenca i capitoli di una serie, scegli dal/al e gli indirizzi si compilano da soli.
+- 📦 **Più capitoli in coda**: un indirizzo per riga, un file per capitolo, oppure...
+- 📕 **...un unico volume**: tutti i capitoli in un solo file, con l'indice per saltare da un capitolo all'altro.
 - 📚 **EPUB per Kobo**: titolo, serie, numero del capitolo, autore e trama compaiono nella libreria del Kobo.
 - 🖼️ **Immagini originali**: nessuna ricompressione, la qualità resta quella del sito.
 - 🛡️ **Niente pubblicità**: popup e nuove schede vengono chiusi, e la pagina non può essere portata su altri siti.
@@ -40,7 +42,15 @@
 2. Scegli la cartella dove salvare.
 3. Premi **Crea CBZ**. Fatto!
 
-Vuoi leggerlo sul **Kobo**? Spunta **Crea EPUB per Kobo**, scrivi il nome della serie (ed eventualmente autore, genere, trama...) e copia gli EPUB nel Kobo via USB.
+**Tanti capitoli?** Incolla in **Lista capitoli** la pagina del sito che li elenca tutti, indica **dal** / **al** (vuoti = tutti)
+e premi **Trova capitoli**: gli indirizzi finiscono in **Indirizzi**, dove puoi controllarli prima di partire.
+
+**Un volume unico?** Spunta **Crea singolo volume**: i capitoli vengono uniti in un solo file, chiamato per esempio
+"La mia serie - Capitoli 001-010" (oppure come scrivi in **Nome file**). Se qualche capitolo non si riesce a scaricare,
+l'app te lo dice e ti chiede se creare comunque il volume con gli altri.
+
+Vuoi leggerlo sul **Kobo**? Spunta **Crea EPUB per Kobo**, scrivi il nome della serie (ed eventualmente autore, genere, trama...)
+e copia gli EPUB nel Kobo via USB. Con il volume puoi indicare anche il **Numero volume**: sul Kobo vedrai "La mia serie Vol. 01".
 
 ### Cosa spuntare
 Di solito **niente**: AutoMangator capisce da solo se la pagina mostra tutto il capitolo o è un reader da sfogliare.
@@ -50,6 +60,7 @@ Di solito **niente**: AutoMangator capisce da solo se la pagina mostra tutto il 
 | **Mostra il browser** | Il sito ha una protezione anti-bot. Te lo dice l'app e spunta la casella per te: premi di nuovo il pulsante e, se nella finestra compare una verifica, completala tu. |
 | **Sfoglia il reader pagina per pagina** | È un reader a una pagina per volta, ma ti è arrivata solo la prima pagina. |
 | **Crea EPUB per Kobo** | Vuoi gli EPUB con i dati della serie invece del semplice `.cbz`. |
+| **Crea singolo volume** | Vuoi tutti i capitoli in un unico file invece di uno per capitolo. |
 
 Hai già una cartella piena di `.cbz`? Il pulsante **EPUB per Kobo...** li trasforma tutti in una volta, con una tabella per correggere numeri e titoli dei capitoli.
 

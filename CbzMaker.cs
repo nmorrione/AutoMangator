@@ -94,25 +94,18 @@ public sealed partial class CbzMaker : IAsyncDisposable
         guard.SiteLoaded(page.Url);
 
         log.Report("Scorro la pagina per caricare tutte le immagini...");
-        await page.EvaluateAsync(@"async () => {
-            const sleep = ms => new Promise(r => setTimeout(r, ms));
-            let stable = 0, lastHeight = 0;
-            for (let i = 0; i < 500 && stable < 3; i++) {
-                window.scrollBy(0, window.innerHeight * 0.8);
-                await sleep(350);
-                const h = document.documentElement.scrollHeight;
-                const atBottom = window.scrollY + window.innerHeight >= h - 2;
-                stable = (atBottom && h === lastHeight) ? stable + 1 : 0;
-                lastHeight = h;
-            }
-        }");
+        await page.EvaluateAsync(ScrollToBottomJs);
         try { await page.WaitForLoadStateAsync(LoadState.NetworkIdle, new() { Timeout = 30_000 }); } catch (TimeoutException) { }
         ct.ThrowIfCancellationRequested();
 
-        // Immagini in ordine di pagina, scartando quelle troppo piccole (loghi, icone, banner)
+        // Immagini in ordine di pagina, scartando quelle troppo piccole (loghi, icone, banner) e quelle
+        // mostrate in piccolo anche se il file è grande (avatar dei commenti, miniature, promozioni)
         var srcs = await page.EvaluateAsync<string[]>(@"min => [...new Set(
             [...document.images]
-                .filter(i => i.complete && i.naturalWidth >= min && i.naturalHeight >= min)
+                .filter(i => {
+                    const r = i.getBoundingClientRect();
+                    return i.complete && i.naturalWidth >= min && i.naturalHeight >= min && r.width >= 150 && r.height >= 150;
+                })
                 .map(i => i.currentSrc || i.src)
                 .filter(s => s && !s.startsWith('blob:')))]", minSide);
 
@@ -125,6 +118,12 @@ public sealed partial class CbzMaker : IAsyncDisposable
 
         if (srcs.Length == 0)
             throw new InvalidOperationException("Nessuna immagine trovata (prova un lato minimo più basso o mostra il browser).");
+        // Una sola immagine orizzontale: di solito è l'avviso "capitolo non disponibile" del sito, non una pagina
+        if (srcs.Length == 1 && await page.EvaluateAsync<bool>(@"src => {
+                const i = [...document.images].find(x => (x.currentSrc || x.src) === src);
+                return !!i && i.naturalWidth > i.naturalHeight;
+            }", srcs[0]))
+            throw new InvalidOperationException("Trovata una sola immagine orizzontale: probabilmente il capitolo non è (ancora) disponibile.");
         log.Report($"Trovate {srcs.Length} immagini.");
 
         if (string.IsNullOrWhiteSpace(fileName))
@@ -163,6 +162,55 @@ public sealed partial class CbzMaker : IAsyncDisposable
             if (File.Exists(tmpPath)) File.Delete(tmpPath);
         }
 
+        return outPath;
+    }
+
+    // Scorre fino in fondo (anche se la pagina si allunga caricando altro), per far partire il lazy-loading
+    private const string ScrollToBottomJs = @"async () => {
+        const sleep = ms => new Promise(r => setTimeout(r, ms));
+        let stable = 0, lastHeight = 0;
+        for (let i = 0; i < 500 && stable < 3; i++) {
+            window.scrollBy(0, window.innerHeight * 0.8);
+            await sleep(350);
+            const h = document.documentElement.scrollHeight;
+            const atBottom = window.scrollY + window.innerHeight >= h - 2;
+            stable = (atBottom && h === lastHeight) ? stable + 1 : 0;
+            lastHeight = h;
+        }
+    }";
+
+    /// <summary>
+    /// Unisce più .cbz in un unico volume, nell'ordine dato: le pagine vengono rinumerate
+    /// (0001, 0002, ...) e restano non compresse, come nei capitoli.
+    /// </summary>
+    public static string MergeCbz(IEnumerable<string> cbzPaths, string outputFolder, string fileName)
+    {
+        Directory.CreateDirectory(outputFolder);
+        string outPath = UniquePath(Path.Combine(outputFolder, SafeFileName(fileName) + ".cbz"));
+        string tmpPath = outPath + ".part";
+        try
+        {
+            using (var volume = ZipFile.Open(tmpPath, ZipArchiveMode.Create))
+            {
+                int n = 0;
+                foreach (var cbz in cbzPaths)
+                {
+                    using var chapter = ZipFile.OpenRead(cbz);
+                    foreach (var page in chapter.Entries.Where(e => e.Length > 0).OrderBy(e => e.FullName, StringComparer.OrdinalIgnoreCase))
+                    {
+                        var entry = volume.CreateEntry($"{++n:D4}{Path.GetExtension(page.Name)}", CompressionLevel.NoCompression);
+                        using var src = page.Open();
+                        using var dst = entry.Open();
+                        src.CopyTo(dst);
+                    }
+                }
+            }
+            File.Move(tmpPath, outPath);
+        }
+        finally
+        {
+            if (File.Exists(tmpPath)) File.Delete(tmpPath);
+        }
         return outPath;
     }
 

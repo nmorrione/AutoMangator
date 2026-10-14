@@ -18,6 +18,11 @@ sia con i **reader a una pagina per volta**, che l'app riconosce e sfoglia da so
 
 Durante il download popup e nuove schede vengono chiusi e la pagina non può essere portata su altri siti.
 
+## Lista capitoli e volumi
+- **Trova capitoli**: incolla la pagina del sito che elenca i capitoli, scegli dal/al e gli indirizzi si compilano da soli.
+- **Crea singolo volume**: tutti i capitoli in un solo file (CBZ o EPUB con indice per capitolo e numero del volume).
+  Se un capitolo non si scarica, l'app chiede se creare comunque il volume con gli altri.
+
 ## EPUB per Kobo
 Il Kobo non legge i dati contenuti nei `.cbz`. AutoMangator può creare per ogni capitolo un `.kepub.epub` con serie,
 numero, autore e gli altri dati: spuntando **Crea EPUB per Kobo** nella finestra principale mentre scarichi, oppure

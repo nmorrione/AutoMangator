@@ -111,16 +111,45 @@ public static partial class EpubMaker
         return string.IsNullOrWhiteSpace(ch.Title) ? title : $"{title} - {ch.Title.Trim()}";
     }
 
-    /// <summary>Crea l'EPUB e restituisce il percorso del file.</summary>
+    /// <summary>Crea l'EPUB di un capitolo e restituisce il percorso del file.</summary>
     public static string Create(BookInfo book, ChapterInfo ch, string outputFolder)
     {
-        var pages = ReadPages(ch.CbzPath);
-        if (pages.Count == 0)
-            throw new InvalidOperationException($"Nessuna immagine in {ch.FileName}.");
+        string title = BookTitle(book, ch);
+        string path = Path.Combine(outputFolder, CbzMaker.SafeFileName($"{book.Series} {PadNumber(ch.Number)}") + ".kepub.epub");
+        // Stesso identificativo per lo stesso capitolo: ricreare l'EPUB non lo duplica
+        return Write(book, [ch], title, NormalizeNumber(ch.Number), Identifier($"{book.Series.Trim().ToLowerInvariant()}|{NormalizeNumber(ch.Number)}"),
+            path, chapterToc: false);
+    }
 
-        Directory.CreateDirectory(outputFolder);
-        string outPath = Path.Combine(outputFolder, CbzMaker.SafeFileName($"{book.Series} {PadNumber(ch.Number)}") + ".kepub.epub");
+    /// <summary>
+    /// Crea un unico EPUB con tutti i capitoli, nell'ordine dato, e un indice con un punto per capitolo.
+    /// Titolo "Serie Vol. 02" se c'è il numero del volume, altrimenti "Serie 001-010".
+    /// </summary>
+    public static string CreateVolume(BookInfo book, IReadOnlyList<ChapterInfo> chapters, string? volume, string outputFolder, string? fileName)
+    {
+        string range = $"{PadNumber(chapters[0].Number)}-{PadNumber(chapters[^1].Number)}";
+        bool hasVolume = !string.IsNullOrWhiteSpace(volume);
+        string title = hasVolume ? $"{book.Series} Vol. {PadVolume(volume!)}" : $"{book.Series} {range}";
+        string index = NormalizeNumber(hasVolume ? volume! : chapters[0].Number);
+        string name = string.IsNullOrWhiteSpace(fileName) ? title : fileName.Trim();
+        string path = Path.Combine(outputFolder, CbzMaker.SafeFileName(name) + ".kepub.epub");
+        return Write(book, chapters, title, index, Identifier($"{book.Series.Trim().ToLowerInvariant()}|volume|{title.ToLowerInvariant()}"),
+            path, chapterToc: true);
+    }
+
+    /// <summary>Voce dell'indice di un capitolo: "Capitolo 012 - Titolo".</summary>
+    public static string ChapterLabel(ChapterInfo ch) =>
+        string.IsNullOrWhiteSpace(ch.Title) ? $"Capitolo {PadNumber(ch.Number)}" : $"Capitolo {PadNumber(ch.Number)} - {ch.Title.Trim()}";
+
+    private sealed record Page(string Id, string Extension, string MediaType, int Width, int Height);
+
+    private static string Write(BookInfo book, IReadOnlyList<ChapterInfo> chapters, string title, string index, string id,
+        string outPath, bool chapterToc)
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(outPath)!);
         string tmpPath = outPath + ".part";
+        var pages = new List<Page>();
+        var toc = new List<(string Label, string PageId)>();
         try
         {
             using (var zip = ZipFile.Open(tmpPath, ZipArchiveMode.Create))
@@ -128,16 +157,18 @@ public static partial class EpubMaker
                 // "mimetype" deve essere il primo file e non compresso
                 Add(zip, "mimetype", "application/epub+zip", CompressionLevel.NoCompression);
                 Add(zip, "META-INF/container.xml", ContainerXml);
-                Add(zip, "OEBPS/content.opf", Opf(book, ch, pages));
-                Add(zip, "OEBPS/nav.xhtml", Nav(BookTitle(book, ch)));
-                Add(zip, "OEBPS/toc.ncx", Ncx(BookTitle(book, ch), Identifier(book, ch)));
-                foreach (var p in pages)
+                foreach (var ch in chapters)
                 {
-                    Add(zip, $"OEBPS/Text/{p.Id}.xhtml", PageXhtml(p));
-                    var entry = zip.CreateEntry($"OEBPS/Images/{p.Id}{p.Extension}", CompressionLevel.NoCompression);
-                    using var s = entry.Open();
-                    s.Write(p.Data);
+                    int before = pages.Count;
+                    // Le immagini vengono scritte subito: anche un volume molto grande non sta tutto in memoria
+                    WritePages(zip, ch.CbzPath, pages);
+                    if (pages.Count == before)
+                        throw new InvalidOperationException($"Nessuna immagine in {ch.FileName}.");
+                    toc.Add((chapterToc ? ChapterLabel(ch) : title, pages[before].Id));
                 }
+                Add(zip, "OEBPS/content.opf", Opf(book, title, index, id, pages));
+                Add(zip, "OEBPS/nav.xhtml", Nav(title, toc));
+                Add(zip, "OEBPS/toc.ncx", Ncx(title, id, toc));
             }
             File.Move(tmpPath, outPath, overwrite: true);
         }
@@ -148,13 +179,11 @@ public static partial class EpubMaker
         return outPath;
     }
 
-    private sealed record Page(string Id, byte[] Data, string Extension, string MediaType, int Width, int Height);
-
-    private static List<Page> ReadPages(string cbzPath)
+    // Aggiunge all'EPUB le pagine di un .cbz (immagine + pagina XHTML), numerandole dopo quelle già presenti
+    private static void WritePages(ZipArchive epub, string cbzPath, List<Page> pages)
     {
-        using var zip = ZipFile.OpenRead(cbzPath);
-        var pages = new List<Page>();
-        foreach (var entry in zip.Entries.Where(e => e.Length > 0).OrderBy(e => e.FullName, StringComparer.OrdinalIgnoreCase))
+        using var cbz = ZipFile.OpenRead(cbzPath);
+        foreach (var entry in cbz.Entries.Where(e => e.Length > 0).OrderBy(e => e.FullName, StringComparer.OrdinalIgnoreCase))
         {
             using var ms = new MemoryStream();
             using (var s = entry.Open()) s.CopyTo(ms);
@@ -165,30 +194,37 @@ public static partial class EpubMaker
 
             string id = $"p{pages.Count + 1:D4}";
             var (w, h) = (codec.Info.Width, codec.Info.Height);
+            Page page;
             switch (codec.EncodedFormat)
             {
-                case SKEncodedImageFormat.Jpeg: pages.Add(new(id, data, ".jpg", "image/jpeg", w, h)); break;
-                case SKEncodedImageFormat.Png: pages.Add(new(id, data, ".png", "image/png", w, h)); break;
-                case SKEncodedImageFormat.Gif: pages.Add(new(id, data, ".gif", "image/gif", w, h)); break;
+                case SKEncodedImageFormat.Jpeg: page = new(id, ".jpg", "image/jpeg", w, h); break;
+                case SKEncodedImageFormat.Png: page = new(id, ".png", "image/png", w, h); break;
+                case SKEncodedImageFormat.Gif: page = new(id, ".gif", "image/gif", w, h); break;
                 default:
                     // WebP, AVIF, ...: Kobo non li mostra negli EPUB
                     using (var bmp = SKBitmap.Decode(data))
                     using (var img = SKImage.FromBitmap(bmp))
                     using (var jpg = img.Encode(SKEncodedImageFormat.Jpeg, 92))
-                        pages.Add(new(id, jpg.ToArray(), ".jpg", "image/jpeg", bmp.Width, bmp.Height));
+                    {
+                        data = jpg.ToArray();
+                        page = new(id, ".jpg", "image/jpeg", bmp.Width, bmp.Height);
+                    }
                     break;
             }
+
+            Add(epub, $"OEBPS/Text/{page.Id}.xhtml", PageXhtml(page));
+            using (var s = epub.CreateEntry($"OEBPS/Images/{page.Id}{page.Extension}", CompressionLevel.NoCompression).Open())
+                s.Write(data);
+            pages.Add(page);
         }
-        return pages;
     }
 
-    private static string Opf(BookInfo book, ChapterInfo ch, List<Page> pages)
+    private static string Opf(BookInfo book, string title, string index, string id, List<Page> pages)
     {
         XNamespace ns = "http://www.idpf.org/2007/opf", dc = "http://purl.org/dc/elements/1.1/";
-        string index = NormalizeNumber(ch.Number);
         var meta = new XElement(ns + "metadata", new XAttribute(XNamespace.Xmlns + "dc", dc),
-            new XElement(dc + "identifier", new XAttribute("id", "bookid"), Identifier(book, ch)),
-            new XElement(dc + "title", BookTitle(book, ch)),
+            new XElement(dc + "identifier", new XAttribute("id", "bookid"), id),
+            new XElement(dc + "title", title),
             new XElement(dc + "language", string.IsNullOrWhiteSpace(book.Language) ? "it" : book.Language.Trim()),
             new XElement(ns + "meta", new XAttribute("property", "dcterms:modified"), DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ")),
             new XElement(ns + "meta", new XAttribute("property", "rendition:layout"), "pre-paginated"),
@@ -255,21 +291,23 @@ public static partial class EpubMaker
         </html>
         """;
 
-    private static string Nav(string title) => $"""
+    // Indice (EPUB 3): una voce per capitolo, che porta alla sua prima pagina
+    private static string Nav(string title, List<(string Label, string PageId)> toc) => $"""
         <?xml version="1.0" encoding="utf-8"?>
         <!DOCTYPE html>
         <html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">
         <head><title>{Esc(title)}</title></head>
-        <body><nav epub:type="toc"><ol><li><a href="Text/p0001.xhtml">{Esc(title)}</a></li></ol></nav></body>
+        <body><nav epub:type="toc"><ol>{string.Concat(toc.Select(t => $"<li><a href=\"Text/{t.PageId}.xhtml\">{Esc(t.Label)}</a></li>"))}</ol></nav></body>
         </html>
         """;
 
-    private static string Ncx(string title, string id) => $"""
+    // Stesso indice nel formato EPUB 2, letto da alcuni lettori
+    private static string Ncx(string title, string id, List<(string Label, string PageId)> toc) => $"""
         <?xml version="1.0" encoding="utf-8"?>
         <ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1">
         <head><meta name="dtb:uid" content="{Esc(id)}"/></head>
         <docTitle><text>{Esc(title)}</text></docTitle>
-        <navMap><navPoint id="p1" playOrder="1"><navLabel><text>{Esc(title)}</text></navLabel><content src="Text/p0001.xhtml"/></navPoint></navMap>
+        <navMap>{string.Concat(toc.Select((t, i) => $"<navPoint id=\"n{i + 1}\" playOrder=\"{i + 1}\"><navLabel><text>{Esc(t.Label)}</text></navLabel><content src=\"Text/{t.PageId}.xhtml\"/></navPoint>"))}</navMap>
         </ncx>
         """;
 
@@ -280,11 +318,14 @@ public static partial class EpubMaker
         </container>
         """;
 
-    // Stesso identificativo per lo stesso capitolo: ricreare l'EPUB non lo duplica
-    private static string Identifier(BookInfo book, ChapterInfo ch)
+    // Identificativo stabile ricavato dal testo dato: ricreare lo stesso libro non lo duplica
+    private static string Identifier(string key) => "urn:uuid:" + new Guid(MD5.HashData(Encoding.UTF8.GetBytes(key)));
+
+    // "2" -> "02": i volumi restano in ordine anche alfabeticamente
+    private static string PadVolume(string s)
     {
-        var hash = MD5.HashData(Encoding.UTF8.GetBytes($"{book.Series.Trim().ToLowerInvariant()}|{NormalizeNumber(ch.Number)}"));
-        return "urn:uuid:" + new Guid(hash);
+        s = NormalizeNumber(s);
+        return s.All(char.IsDigit) ? s.PadLeft(2, '0') : s;
     }
 
     private static void Add(ZipArchive zip, string name, string text, CompressionLevel level = CompressionLevel.Optimal)
@@ -319,7 +360,7 @@ public static partial class EpubMaker
     }
 
     // "12" -> "012", "12.5" -> "012.5": i titoli restano in ordine anche alfabeticamente
-    private static string PadNumber(string s)
+    internal static string PadNumber(string s)
     {
         s = NormalizeNumber(s);
         int dot = s.IndexOf('.');
