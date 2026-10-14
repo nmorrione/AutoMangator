@@ -2,6 +2,11 @@ using Microsoft.Playwright;
 
 namespace AutoMangator;
 
+/// <summary>Il sito ha mostrato una verifica anti-bot al browser nascosto: va ripetuto col browser visibile.</summary>
+public sealed class SecurityCheckException(string url) : InvalidOperationException(
+    $"Protezione anti-bot trovata su {new Uri(url).Host}: spunta \"Mostra il browser\" e riprova. " +
+    "Se nella finestra compare una verifica, completala tu e il download proseguirà da solo.");
+
 // Reader a una pagina per volta: invece di mostrare tutto il capitolo, alcuni siti mostrano
 // un'immagine alla volta. Qui si "sfoglia" il reader come farebbe una persona, raccogliendo
 // le pagine, e si impedisce a pubblicità e link di portare il browser fuori dal capitolo.
@@ -91,9 +96,7 @@ public sealed partial class CbzMaker
     {
         if (!await IsSecurityCheckAsync(page)) return;
         if (headless)
-            throw new InvalidOperationException(
-                "Il sito mostra una verifica di sicurezza anti-bot. Spunta \"Mostra il browser\" e riprova: " +
-                "se la verifica compare nella finestra, completala tu e il download proseguirà da solo.");
+            throw new SecurityCheckException(page.Url);
 
         log.Report("Il sito chiede una verifica di sicurezza: completala nella finestra del browser (attendo fino a 3 minuti)...");
         var deadline = DateTime.UtcNow.AddMinutes(3);

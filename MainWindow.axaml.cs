@@ -133,6 +133,7 @@ public partial class MainWindow : Window
         _cts = new CancellationTokenSource();
         var log = new Progress<string>(Log);
         int ok = 0;
+        bool antiBot = false;
         try
         {
             await using var maker = await CbzMaker.StartAsync(chkShow.IsChecked == true, log);
@@ -162,6 +163,11 @@ public partial class MainWindow : Window
                     }
                     ok++;
                 }
+                catch (SecurityCheckException ex)
+                {
+                    Log($"⚠ {ex.Message}");
+                    antiBot = true;
+                }
                 catch (Exception ex) when (ex is not OperationCanceledException)
                 {
                     Log($"ERRORE: {ex.Message}");
@@ -169,6 +175,12 @@ public partial class MainWindow : Window
                 Log("");
             }
             Log($"Fatto: {ok} di {urls.Count} file creati.");
+            if (antiBot)
+            {
+                // Basta premere di nuovo il pulsante: il browser visibile è già selezionato
+                chkShow.IsChecked = true;
+                Log($"⚠ Ho già spuntato \"Mostra il browser\": premi di nuovo \"{btnStart.Content}\" per riprovare.");
+            }
         }
         catch (OperationCanceledException)
         {

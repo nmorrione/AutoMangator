@@ -9,6 +9,15 @@ L'app non è firmata da Apple (richiederebbe un abbonamento a pagamento), quindi
 
 Alla prima conversione l'app scarica WebKit, il motore di Safari (una sola volta, circa un centinaio di MB).
 
+## Cosa spuntare
+Di solito niente: incolla l'indirizzo e premi **Crea CBZ**. Funziona sia con i siti che mostrano tutto il capitolo
+sia con i **reader a una pagina per volta**, che l'app riconosce e sfoglia da sola.
+- **Mostra il browser**: per i siti con protezione anti-bot. L'app se ne accorge, te lo dice e spunta la casella:
+  basta premere di nuovo il pulsante (e completare la verifica nella finestra, se compare).
+- **Sfoglia il reader pagina per pagina**: solo se un reader non viene riconosciuto e arriva soltanto la prima pagina.
+
+Durante il download popup e nuove schede vengono chiusi e la pagina non può essere portata su altri siti.
+
 ## EPUB per Kobo
 Il Kobo non legge i dati contenuti nei `.cbz`. AutoMangator può creare per ogni capitolo un `.kepub.epub` con serie,
 numero, autore e gli altri dati: spuntando **Crea EPUB per Kobo** nella finestra principale mentre scarichi, oppure
