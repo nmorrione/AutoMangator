@@ -31,8 +31,14 @@ public sealed partial class CbzMaker
             await page.EvaluateAsync(ScrollToBottomJs);
             ct.ThrowIfCancellationRequested();
 
+            // I pezzi di testo si uniscono con uno spazio: "<span>Capitolo 167</span><i>07 Ottobre 2020</i>"
+            // con textContent diventerebbe "Capitolo 16707 Ottobre 2020"
             var links = await page.EvaluateAsync<PageLink[]>(@"() => [...document.querySelectorAll('a[href]')]
-                .map(a => ({ href: a.href, text: a.textContent.trim().replace(/\s+/g, ' ') }))");
+                .map(a => {
+                    const parts = [], walker = document.createTreeWalker(a, NodeFilter.SHOW_TEXT);
+                    while (walker.nextNode()) parts.push(walker.currentNode.textContent);
+                    return { href: a.href, text: parts.join(' ').trim().replace(/\s+/g, ' ') };
+                })");
             return PickChapters(page.Url, links);
         }
         catch (PlaywrightException) when (ct.IsCancellationRequested)
@@ -70,10 +76,25 @@ public sealed partial class CbzMaker
             string url = u.GetLeftPart(UriPartial.Query); // senza #ancora
             if (url.TrimEnd('/') == list.GetLeftPart(UriPartial.Query).TrimEnd('/')) continue;
 
-            var m = LastNumberInUrl().Match(u.PathAndQuery);
-            if (!m.Success) continue;
-            string template = u.Host + u.PathAndQuery[..m.Index] + "{n}" + u.PathAndQuery[(m.Index + m.Length)..];
-            double number = double.Parse(m.Value.Replace(',', '.'), CultureInfo.InvariantCulture);
+            string template;
+            double number;
+            var id = IdSegment().Match(u.AbsolutePath);
+            if (id.Success)
+            {
+                // Indirizzo con un codice al posto del numero (es. .../read/5f7d345f6e97af10df677234):
+                // il numero del capitolo si prende dal testo del link ("Capitolo 167.5")
+                var t = NumberInText(link.Text);
+                if (!t.Success) continue;
+                template = u.Host + u.AbsolutePath[..id.Index] + "{id}" + u.AbsolutePath[(id.Index + id.Length)..] + u.Query;
+                number = double.Parse(t.Groups["n"].Value.Replace(',', '.'), CultureInfo.InvariantCulture);
+            }
+            else
+            {
+                var m = LastNumberInUrl().Match(u.PathAndQuery);
+                if (!m.Success) continue;
+                template = u.Host + u.PathAndQuery[..m.Index] + "{n}" + u.PathAndQuery[(m.Index + m.Length)..];
+                number = double.Parse(m.Value.Replace(',', '.'), CultureInfo.InvariantCulture);
+            }
 
             if (!groups.TryGetValue(template, out var g)) groups[template] = g = [];
             // Lo stesso capitolo può comparire più volte (copertina + titolo): si tiene il testo più lungo
@@ -94,13 +115,33 @@ public sealed partial class CbzMaker
             .ToList();
     }
 
-    // "Capitolo 067 - Ma quanto è forte?" -> "Ma quanto è forte?"; "Chapter 12" -> ""
+    // "Capitolo 067 - Ma quanto è forte?" -> "Ma quanto è forte?"; "Chapter 12" -> "";
+    // "Capitolo 167 07 Ottobre 2020" -> "" (la data di uscita non è un titolo)
     internal static string CleanTitle(string text) =>
-        ChapterPrefix().Replace(text, "").Trim();
+        DateInText().Replace(ChapterPrefix().Replace(text, ""), "").Trim();
 
     // L'ultimo numero nel percorso (o nella query) dell'indirizzo, con eventuale parte decimale
     [GeneratedRegex(@"\d+(?:[.,]\d+)?(?!.*\d)")]
     private static partial Regex LastNumberInUrl();
+
+    // Ultimo pezzo del percorso fatto da un codice di almeno 10 lettere e cifre mescolate, con almeno
+    // una lettera e 4 cifre (così "chapter12" resta un numero normale)
+    [GeneratedRegex(@"(?<=/)(?=[a-z\d]*[a-z])(?=(?:[a-z]*\d){4})[a-z\d]{10,}(?=/?$)", RegexOptions.IgnoreCase)]
+    private static partial Regex IdSegment();
+
+    private static Match NumberInText(string text) =>
+        NumberAfterKeyword().Match(text) is { Success: true } m ? m : FirstNumber().Match(text);
+
+    // Numero del capitolo nel testo del link: dopo "Capitolo"/"Chapter"/..., altrimenti il primo numero
+    [GeneratedRegex(@"(?:capitolo|capítulo|capitulo|cap\.?|chapter|ch\.?|episodio|episode|ep\.?)\s*(?<n>\d+(?:[.,]\d+)?)", RegexOptions.IgnoreCase)]
+    private static partial Regex NumberAfterKeyword();
+
+    [GeneratedRegex(@"(?<n>\d+(?:[.,]\d+)?)")]
+    private static partial Regex FirstNumber();
+
+    // Date come "07 Ottobre 2020", "7 October 2020", "07/10/2020"
+    [GeneratedRegex(@"\b\d{1,2}(?:\s+\p{L}+\s+|[/.-]\d{1,2}[/.-])\d{4}\b")]
+    private static partial Regex DateInText();
 
     // Italiano, inglese e spagnolo: "Capitolo", "Chapter", "Capítulo", "Episodio", "Episode"...
     [GeneratedRegex(@"^\s*(capitolo|capítulo|capitulo|cap\.?|chapter|ch\.?|episodio|episode|ep\.?)?\s*[\d.,]+\s*[-:–—]?\s*", RegexOptions.IgnoreCase)]

@@ -17,6 +17,9 @@ internal static class Program
             return RunCliAsync(url, rest.Length > 0 ? rest[0] : DefaultOutputFolder,
                 args.Contains("--reader"), args.Contains("--show")).GetAwaiter().GetResult();
         }
+        // Web2Comic --list <url della lista capitoli> [--show]: stampa i capitoli trovati
+        if (args is ["--list", var listUrl, ..])
+            return RunListCliAsync(listUrl, args.Contains("--show")).GetAwaiter().GetResult();
         // Web2Comic --epub <cartella con i .cbz> <serie> [autore] [--kobo]
         if (args is ["--epub", var folder, var series, ..])
         {
@@ -46,6 +49,24 @@ internal static class Program
             string file = await maker.CreateAsync(url, folder, null, 300, log, CancellationToken.None, forceReader);
             Console.WriteLine(Loc.T("Log.Created", file));
             return 0;
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine(Loc.T("Log.Error", ex));
+            return 1;
+        }
+    }
+
+    private static async Task<int> RunListCliAsync(string url, bool showBrowser)
+    {
+        var log = new ConsoleLog();
+        try
+        {
+            await using var maker = await CbzMaker.StartAsync(showBrowser, log);
+            var chapters = await maker.FindChaptersAsync(url, log, CancellationToken.None);
+            foreach (var ch in chapters)
+                Console.WriteLine($"{ch.Number.ToString(System.Globalization.CultureInfo.InvariantCulture)}\t{ch.Url}\t{ch.Title}");
+            return chapters.Count > 0 ? 0 : 1;
         }
         catch (Exception ex)
         {

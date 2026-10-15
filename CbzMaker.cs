@@ -150,6 +150,8 @@ public sealed partial class CbzMaker : IAsyncDisposable
         await page.GotoAsync(url, new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
         await WaitForSecurityCheckAsync(page, headless, log, ct);
         guard.SiteLoaded(page.Url);
+        // Il titolo si legge subito: sfogliando un reader si può finire su pagine senza titolo
+        string title = await page.TitleAsync();
 
         log.Report(T("Engine.Scrolling"));
         await page.EvaluateAsync(ScrollToBottomJs);
@@ -186,8 +188,8 @@ public sealed partial class CbzMaker : IAsyncDisposable
 
         if (string.IsNullOrWhiteSpace(fileName))
         {
-            string title = await page.TitleAsync();
-            fileName = string.IsNullOrWhiteSpace(title) ? new Uri(url).Host : title;
+            if (string.IsNullOrWhiteSpace(title)) title = await page.TitleAsync();
+            fileName =string.IsNullOrWhiteSpace(title) ? new Uri(url).Host : title;
         }
         Directory.CreateDirectory(outputFolder);
         string outPath = ReservePath(Path.Combine(outputFolder, SafeFileName(fileName) + ".cbz"));
@@ -196,6 +198,8 @@ public sealed partial class CbzMaker : IAsyncDisposable
         string tmpPath = outPath + ".part";
         try
         {
+            // Un .part rimasto da un'esecuzione interrotta di colpo si sovrascrive
+            if (File.Exists(tmpPath)) File.Delete(tmpPath);
             using (var zip = ZipFile.Open(tmpPath, ZipArchiveMode.Create))
             {
                 int n = 0;
@@ -294,7 +298,12 @@ public sealed partial class CbzMaker : IAsyncDisposable
             if (src.StartsWith("data:"))
                 return Convert.FromBase64String(src[(src.IndexOf(',') + 1)..]);
             if (responses.TryGetValue(src, out var r))
-                return await r.BodyAsync();
+            {
+                // I reader che ricaricano la pagina a ogni pagina fanno dimenticare al browser
+                // le risposte precedenti: in quel caso si riscarica l'immagine
+                try { return await r.BodyAsync(); }
+                catch (PlaywrightException) { }
+            }
             var resp = await context.APIRequest.GetAsync(src, new() { Headers = new Dictionary<string, string> { ["Referer"] = referer } });
             return resp.Ok ? await resp.BodyAsync() : null;
         }

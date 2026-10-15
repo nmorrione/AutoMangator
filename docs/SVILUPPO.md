@@ -40,6 +40,8 @@ dotnet publish Web2Comic.csproj -p:PublishProfile=Portable
 ## Da terminale
 - `Web2Comic --cli <indirizzo> [cartella] [--reader] [--show]`: crea il `.cbz` senza aprire la finestra
   (`--reader` forza lo sfoglio del reader, `--show` mostra il browser).
+- `Web2Comic --list <indirizzo della lista> [--show]`: stampa i capitoli trovati (numero, indirizzo, titolo),
+  come "Trova capitoli".
 - `Web2Comic --epub <cartella> <serie> [autore] [--kobo]`: crea gli EPUB dai `.cbz` della cartella, nella sottocartella `EPUB`
   (`--kobo` li crea come `.kepub.epub`).
 
