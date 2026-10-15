@@ -1,5 +1,10 @@
 🇬🇧 English · [🇮🇹 Italiano](https://github.com/nmorrione/Web2Comic/blob/main/README.it.md) · [🇪🇸 Español](https://github.com/nmorrione/Web2Comic/blob/main/README.es.md)
 
+## What's new in 1.8.1
+- **Find chapters** now also recognizes sites whose chapter addresses end with a code instead of the number (the number is read from the link text).
+- Fixed readers that reload the whole page at every page turn: their pages were found but then skipped.
+- The file name uses the chapter title even when the reader ends on a page without one.
+
 ## Download
 - **Windows** (10/11, 64-bit): `Web2Comic-Windows-x64.exe`. A single portable file: download it and run it, nothing to install.
 - **macOS** (Apple Silicon, macOS 14 or later): `Web2Comic-macOS-AppleSilicon.zip`. Extract it and move `Web2Comic.app` to Applications.
